@@ -167,27 +167,143 @@ class Rayleigh(object):
             px1, py1, pz1 = energy*SinPhi*CosTheta, energy*SinPhi*SinTheta, energy*CosTheta
             self.set_outMom(px1, py1, pz1)
             px1n, py1n, pz1n = CosPhi*SinTheta, SinPhi*SinTheta, CosTheta
-
             ex0, ey0, ez0 = self.inPol[0], self.inPol[1], self.inPol[2]
 
-            c = -1. / (px1n*ex0 + py1n*ey0 + pz1n*ez0)
-            ex1, ey1, ez1 = px1n + c*ex0, py1n+c*ey0, pz1n+c*ez0
+
+            beta = random.uniform(0, 1) * 2 * np.pi
+            SinBeta, CosBeta = np.sin(beta), np.cos(beta)
+            N = np.sqrt(1 - SinTheta**2*CosPhi**2)
+            ex1_per, ey1_per, ez1_per = 0, CosTheta*SinBeta/N, -SinTheta*SinPhi/N
+            ex1_par, ey1_par, ez1_par = N*CosBeta, -SinTheta**2*CosBeta*SinPhi*CosPhi/N, -SinTheta*CosTheta*CosPhi*CosBeta/N
+            ex1, ey1, ez1 = ex1_par+ex1_per, ey1_par+ey1_per, ez1_par+ez1_per
+            ex1n, ey1n, ez1n = self.normalize(ex1, ey1, ez1)
+
+
+            cos2Theta = CosBeta**2 * (1 - SinTheta**2*CosPhi**2)
+            cosTheta = np.sqrt(cos2Theta)
+            if ex1n*ex0+ey1n*ey0+ez1n*ez0 < 0:
+                cosTheta = -cosTheta
+
+            if cos2Theta >= random.uniform(0, 1):
+                self.set_outPolBeta(beta)
+                self.set_polAngle(np.arccos(cosTheta))
+                flag = False
+
+
+    def SampleFromTheta(self):
+        self.set_inMom(0, 0, 1)
+        self.set_inPol(1, 0, 0)
+
+        flag = True
+        while flag:
+            Theta = random.uniform(0, 1) * 1 * np.pi
+            if np.cos(Theta)**2 > random.uniform(0, 1):
+                flag = False
+
+            CosTheta = random.uniform(0, 1)
+            SinTheta = np.sqrt(1-CosTheta**2)
+            if random.uniform(0, 1) < 0.5 :
+                CosTheta = -CosTheta
+            
+            rand = 2*np.pi * random.uniform(0, 1)
+            SinPhi = np.sin(rand)
+            CosPhi = np.cos(rand)
+
+            if SinTheta == 1 and CosPhi == 1:
+                beta = random.uniform(0, 1) * 2 *np.pi
+            else:
+                Cos2Beta = np.cos(Theta)**2 / (1- SinTheta**2*CosPhi**2)
+                CosBeta = np.sqrt(Cos2Beta)
+                if random.uniform(0, 1) > 0.5:
+                    CosTheta = -CosTheta
+                beta = np.arccos(CosBeta)
+            
+
+            E = self.inE
+            self.set_outMomTheta(np.arccos(CosTheta))
+            self.set_outMomPhi(rand)
+            self.set_outMom(E*SinTheta*CosPhi, E*SinTheta*SinPhi, E*CosTheta)
+            self.set_outPolBeta(beta)
+            self.set_polAngle(Theta)
+
+
+            SinBeta, CosBeta = np.sin(beta), np.cos(beta)
+            N = np.sqrt(1 - SinTheta**2*CosPhi**2)
+            ex1_per, ey1_per, ez1_per = 0, CosTheta*SinBeta/N, -SinTheta*SinPhi/N
+            ex1_par, ey1_par, ez1_par = N*CosBeta, -SinTheta**2*CosBeta*SinPhi*CosPhi/N, -SinTheta*CosTheta*CosPhi*CosBeta/N
+            ex1, ey1, ez1 = ex1_par+ex1_per, ey1_par+ey1_per, ez1_par+ez1_per
             ex1n, ey1n, ez1n = self.normalize(ex1, ey1, ez1)
             self.set_outPol(ex1n, ey1n, ez1n)
 
-            if np.abs(ex1n) < 1e-5 and np.abs(ey1n)<1e-5 and np.abs(ez1n) < 1e-5 :   # special case
+
+            
+
+            """
+            if py1n == 0 and pz1 == 0 :  ## p // e0
                 rand = np.pi * 2 *random.uniform(0, 1)
                 y, z = np.cos(rand), np.sin(rand)
                 ex1n, ey1n, ez1n = 0, y, z
                 self.set_outPol(0, y, z)
 
+            elif py1n == 0 and pz1n != 0:
+    
+                ## parallel components
+                k1 = 1
+                k2 = -k1 * px1n
+                ex1_par = k1 * 1 + k2 * px1n
+                ey1_par = k2 * py1n
+                ez1_par = k2 * pz1n
+                ex1n_par, ey1n_par, ez1n_par = self.normalize(ex1_par, ey1_par, ez1_par)
 
-            cosTheta = ex1n * ex0 + ey1n * ey0 + ez1n * ez0
+                # perpendicular components
+                ex1_per = 0
+                ey1_per = 1
+                ez1_per = -py1n * ey1_par / pz1n
+                ex1n_per, ey1n_per, ez1n_per = self.normalize(ex1_per, ey1_per, ez1_per)
 
-            if cosTheta**2 > random.uniform(0, 1):
+                rand = random.uniform(0, 1) * 2 *np.pi
+                ex1 = np.cos(rand) * ex1n_par + np.sin(rand) * ex1n_per
+                ey1 = np.cos(rand) * ey1n_par + np.sin(rand) * ey1n_per
+                ez1 = np.cos(rand) * ez1n_par + np.sin(rand) * ez1n_per
+                ex1n ,ey1n, ez1n = self.normalize(ex1, ey1, ez1)
+                self.set_outPol(ex1n, ey1n, ez1n)
+
+            
+            else:
+                
+                ## parallel components
+                k1 = 1
+                k2 = -k1 * px1n
+                ex1_par = k1 * 1 + k2 * px1n
+                ey1_par = k2 * py1n
+                ez1_par = k2 * pz1n
+                ex1n_par, ey1n_par, ez1n_par = self.normalize(ex1_par, ey1_par, ez1_par)
+
+                # perpendicular components
+                ex1_per = 0
+                ez1_per = 1
+                ey1_per = -pz1n * ez1_par / py1n
+                ex1n_per, ey1n_per, ez1n_per = self.normalize(ex1_per, ey1_per, ez1_per)
+
+                rand = random.uniform(0, 1) * 2 *np.pi
+                ex1 = np.cos(rand) * ex1n_par + np.sin(rand) * ex1n_per
+                ey1 = np.cos(rand) * ey1n_par + np.sin(rand) * ey1n_per
+                ez1 = np.cos(rand) * ez1n_par + np.sin(rand) * ez1n_per
+                ex1n ,ey1n, ez1n = self.normalize(ex1, ey1, ez1)
+                self.set_outPol(ex1n, ey1n, ez1n)
+
+
+
+            beta = rand
+            #cosTheta = ex1n * ex0 + ey1n * ey0 + ez1n * ez0
+            cosTheta = ex1n
+            if np.cos(beta)**2 * (1 - SinTheta**2 * CosPhi**2) >= random.uniform(0, 1):
+                self.set_outPolBeta(beta)
+                self.set_polAngle(np.arccos(cosTheta))
+                print(cosTheta**2, np.cos(beta)**2*(1-SinTheta**2*CosPhi**2))
                 flag = False
 
-        self.set_polAngle(np.arccos(cosTheta))
+            """
 
 
 

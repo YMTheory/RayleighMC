@@ -42,11 +42,11 @@ class Arrow3D(FancyArrowPatch):
 
 if __name__ == "__main__" :
 
-    if len(sys.argv) != 2:
-        print("Wrong argument number ! ---> Required a input filename !")
+    if len(sys.argv) != 3:
+        print("Wrong argument number ! ---> Required a input root filename and a output pdf filename!")
 
 
-    tt = up.open(sys.argv[1])["ray"]
+    tt = up.open("./rootfiles/"+sys.argv[1])["ray"]
     outpx = tt["outpx"].array()
     outpy = tt["outpy"].array()
     outpz = tt["outpz"].array()
@@ -56,6 +56,7 @@ if __name__ == "__main__" :
     momTheta = tt["outMomTheta"].array()
     momPhi = tt["outMomPhi"].array()
     polAngle = tt["polAngle"].array()
+    beta = tt["beta"].array()
 
 
     hAngle = Hist(
@@ -63,6 +64,9 @@ if __name__ == "__main__" :
     )
     hCalc = Hist(
         hist.axis.Regular(50, -10, 190, name="calc", label="calc [deg]", flow=False),
+    )
+    hBeta = Hist(
+        hist.axis.Regular(50, -10, 370, name="beta", label="beta [deg]", flow=False),
     )
 
 
@@ -86,7 +90,7 @@ if __name__ == "__main__" :
         #vec1 = [outpx[i], outpy[i], outpz[i]]
         #theta1, phi1 = calculateAngle(vec1)
         theta1, phi1 = momTheta[i], momPhi[i]
-        Theta = np.arccos(np.sqrt(1 - np.cos(phi1)**2*np.sin(theta1)**2))
+        Theta = np.arccos(np.sqrt(1 - np.cos(phi1)**2*np.sin(theta1)**2) * np.cos(beta[i]))
         theta = polAngle[i]
         vec1 = [outex[i], outey[i], outez[i]]
         theta1, phi1 = calculateAngle(vec1)
@@ -98,6 +102,8 @@ if __name__ == "__main__" :
         hCalc.fill(Theta * 180./np.pi)
 
         hPol.fill(theta1, phi1)
+
+        hBeta.fill(beta[i] * 180. / np.pi)
 
     hMom.fill(momTheta*180/np.pi, momPhi*180/np.pi)
     
@@ -116,12 +122,13 @@ if __name__ == "__main__" :
     #plt.show()
     
     
-    fig2 = plt.figure(constrained_layout=True, figsize=(16 , 4))
-    spec2 = gridspec.GridSpec(ncols=3, nrows=1, figure=fig2)
+    fig2 = plt.figure(constrained_layout=True, figsize=(18 , 9))
+    spec2 = gridspec.GridSpec(ncols=4, nrows=2, figure=fig2)
     f2_ax1 = fig2.add_subplot(spec2[0, 0])
     f2_ax2 = fig2.add_subplot(spec2[0, 1])
     f2_ax3 = fig2.add_subplot(spec2[0, 2])
-    #f2_ax4 = fig2.add_subplot(spec2[0, 3])
+    f2_ax4 = fig2.add_subplot(spec2[0, 3])
+    f2_ax5 = fig2.add_subplot(spec2[1, 0])
 
 
     mplhep.hist2dplot(hMom, ax=f2_ax1)
@@ -133,11 +140,16 @@ if __name__ == "__main__" :
     #f2_ax3.hist(pphi1_arr, bins=50, color="blue", edgecolor="black")
     mplhep.histplot(hMom.project("momphi"), ax=f2_ax3, color="red")
     f2_ax3.set_xlabel(r"$\phi$ [deg]", fontsize=15)
-    #mplhep.histplot(hAngle, ax=f2_ax4, color="black")
-    #f2_ax4.set_xlabel(r"$\phi$ [deg]", fontsize=15)
+    mplhep.histplot(hBeta, ax=f2_ax4, color="black")
+    f2_ax4.set_xlabel(r"$\beta$ [deg]", fontsize=15)
+    mplhep.histplot(hAngle, ax=f2_ax5, color="black")
+    mplhep.histplot(hCalc, ax=f2_ax5, color="hotpink")
+    f2_ax5.set_xlabel(r"angle [deg]", fontsize=15)
+
+
 
     plt.tight_layout()
-    plt.savefig("sample_mom.pdf")
+    plt.savefig("./pdffiles/"+sys.argv[2])
     plt.show()
 
     

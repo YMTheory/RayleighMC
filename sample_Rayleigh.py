@@ -30,7 +30,7 @@ def calculateAngle(vec):
 if __name__ == "__main__" :
 
     if len(sys.argv) == 1:
-        outfile = "tmp.root"
+        outfile = "./rootfiles/tmp.root"
     else:
         outfile = sys.argv[1]
 
@@ -55,6 +55,7 @@ if __name__ == "__main__" :
     outMomTheta, outMomPhi = [], []
     outex, outey, outez = [], [], []
     polAngle = []
+    beta = []
 
     ray.set_inMom(0, 0, 0.1)
     ray.set_inPol(1, 0, 0)
@@ -65,7 +66,8 @@ if __name__ == "__main__" :
     for i in range(nPhoton) :
         if i % 100 == 0 :
             print(i)
-        ray.sampleLocally()
+        ray.SampleFromTheta()
+        #ray.sampleLocally()
         #ray.sampleSeconderies()   # Geant4 OpRayleigh sampling
         #ray.set_outMomPhi(ray.GeneratePhi())
         #ray.GetPhotonPolarisation()
@@ -83,6 +85,7 @@ if __name__ == "__main__" :
         outey.append(outPol[1])
         outez.append(outPol[2])
         polAngle.append(ray.get_polAngle())
+        beta.append(ray.get_outPolBeta())
 
 
         ### Angle calculation
@@ -100,11 +103,11 @@ if __name__ == "__main__" :
         #hPol.fill(polTheta, polPhi)
         #hBeta.fill(ray.get_outPolBeta() * 180 / np.pi)
     
-    with uproot3.recreate(outfile) as f:
+    with uproot3.recreate("./rootfiles/"+outfile) as f:
         f["ray"] = uproot3.newtree({"outpx":"float64", "outpy":"float64", "outpz":"float64",
                     "outMomTheta":"float64", "outMomPhi":"float64",
-                    "outex":"float64", "outey":"float64", "outez":"float64", "polAngle":"float64"})
+                    "outex":"float64", "outey":"float64", "outez":"float64", "polAngle":"float64", "beta":"float64"})
         f["ray"].extend({"outpx":outpx, "outpy":outpy, "outpz":outpz, 
                     "outMomTheta":outMomTheta, "outMomPhi":outMomPhi,
-                    "outex":outex, "outey":outey, "outez":outez, "polAngle":polAngle})
+                    "outex":outex, "outey":outey, "outez":outez, "polAngle":polAngle, "beta":beta})
 
