@@ -1,72 +1,97 @@
 import random
-
-from matplotlib.pyplot import pie
 import numpy as np
-import vector
+from scipy.spatial.transform import Rotation as R
 
 
 class Rayleigh(object):
 
     def __init__(self) -> None:
-        self.inMom  = [0, 0, 1]
-        self.inPol  = [1, 0, 0]
-        self.outMom = [0, 0, 0]
-        self.outPol = [0, 0, 0]
-        self.outPol1 = [0, 0, 0]    # perp
-        self.outPol2 = [0, 0, 0]    # parallel
+        self.inMom  = np.array([0., 0., 1.])
+        self.inPol  = np.array([1., 0., 0.])
+        self.outMom = np.array([0., 0., 0.])
+        self.outPol = np.array([0., 0., 0.])
         self.inE = 1
+
+        self.nPhoton = 1
 
         self.outMomTheta = 0
         self.outMomPhi   = 0
         self.outPolTheta = 0
         self.outPolPhi   = 0
-        self.outPolBeta  = 0
         self.inMomTheta = 0
         self.inMomPhi   = 0
         self.inPolTheta = 0
         self.inPolPhi   = 0
         self.polAngle   = 0
 
+        self.rhou = 0
+        self.rhov = 0
+        self.alpha = 0.
+        self.beta = 0.
+
     def get_inE(self):
         return self.inE
 
 
     def set_inMom(self, x, y, z):
-        self.inMom = x, y, z
+        self.inMom[0] = x
+        self.inMom[1] = y
+        self.inMom[2] = z
         self.inE = np.sqrt(x**2+y**2+z**2)
 
     def set_inPol(self, x, y, z):
-        self.inPol = x, y, z
+        self.inPol[0] = x
+        self.inPol[1] = y
+        self.inPol[2] = z
 
     def set_outMom(self, x, y, z):
         self.outMom = x, y, z
+        self.outMom[0] = x
+        self.outMom[1] = y
+        self.outMom[2] = z
     
-    def set_outPol1(self, x, y, z):
-        self.outPol1 = x, y, z
-
-    def set_outPol2(self, x, y, z):
-        self.outPol2 = x, y, z
-
     def set_outPol(self, x, y, z):
-        self.outPol = x, y, z
+        self.outPol[0] = x
+        self.outPol[1] = y
+        self.outPol[2] = z
+
 
     def set_nPhotons(self, N):
         self.nPhoton = N
 
+
     def get_outPol(self):
         return self.outPol
 
-    def get_outPol1(self):
-        return self.outPol1
-
-    def get_outPol2(self):
-        return self.outPol2
 
     def get_polAngle(self):
         return self.polAngle
 
     def set_polAngle(self, angle):
         self.polAngle = angle
+
+
+    def set_rhou(self, delta):
+        self.rhou = delta
+        self.rhov = delta / (2 - delta) 
+
+    def get_rhou(self):
+        return self.rhou
+
+    def set_rhov(self, delta):
+        self.rhov = delta
+        self.rhou = 2*self.rhov / (1 + self.rhov)
+
+    def get_rhov(self):
+        return self.rhov
+
+    
+    def get_alpha(self):
+        return self.alpha
+
+    def get_beta(self):
+        return self.beta
+
 
 
     def rotateUz(self, u1, u2, u3, dx, dy, dz):
@@ -145,12 +170,70 @@ class Rayleigh(object):
     def set_outPolBeta(self, beta):
         self.outPolBeta = beta
 
-    def sampleLocally(self):
-        self.set_inMom(0, 0, 1)
-        self.set_inPol(1, 0, 0)
+
+    def calcTensor(self):
+        alpha = 1
+        rho = self.rhov
+        beta = (np.sqrt(45*rho)/3 - np.sqrt(3-4*rho)) / (-np.sqrt(3-4*rho) - 2/3*np.sqrt(45*rho))
+        #beta = (np.sqrt(45*rho)/3 + np.sqrt(3-4*rho)) / (np.sqrt(3-4*rho) -2/3*np.sqrt(45*rho))
+
+        self.alpha = alpha
+        self.beta = beta
+
+
+
+    def rotateTensor(self):
+        theta1 = random.uniform(0, 2*np.pi)
+        theta2 = random.uniform(0, 2*np.pi)
+        theta3 = random.uniform(0, 2*np.pi)
+
+        r = R.from_rotvec([theta1, theta2, theta3])
+        mat = r.as_matrix()
+
+        tensor0 = np.array([[self.alpha, 0, 0], [0, self.beta, 0], [0, 0, self.beta]])
+
+        tensor = np.matmul(np.matmul(mat.T, tensor0), mat)
+
+        inPol_mod = np.matmul(tensor, self.inPol)
+        inPol_modn1, inPol_modn2, inPol_modn3 = self.normalize(inPol_mod[0], inPol_mod[1], inPol_mod[2])
+
+        self.set_inPol(inPol_modn1, inPol_modn2, inPol_modn3)
+
+
+    def calculatePol(self):
+        
+        CosTheta = np.cos(self.outMomTheta)
+        SinTheta = np.sin(self.outMomTheta)
+        CosPhi = np.cos(self.outMomPhi)
+        SinPhi = np.sin(self.outMomPhi)
+
+        px1n, py1n, pz1n = CosPhi*SinTheta, SinPhi*SinTheta, CosTheta
+        
+
+        if py1n == 0 and pz1n == 0 :
+            beta = random.uniform(0, 1) * 2 * np.pi
+            SinBeta, CosBeta = np.sin(beta), np.cos(beta)
+
+        else:
+            beta = 0   # required at the plane 
+            if random.uniform(0, 1) < 0.5:
+                beta = np.pi
+            SinBeta, CosBeta = np.sin(beta), np.cos(beta)
+
+
+        N = np.sqrt(1 - SinTheta**2*CosPhi**2)
+        ex1, ey1, ez1 = N * CosBeta, SinTheta**2*SinPhi*CosPhi/N*CosBeta, SinTheta*CosTheta*CosPhi/N*CosBeta
+        ex1n, ey1n, ez1n = self.normalize(ex1, ey1, ez1)
+        self.set_outPol(ex1n, ey1n, ez1n)
+
+
+
+
+    def sampleMomPol(self):
 
         flag = True
         while flag:
+            # sample momentum randomly
             CosTheta = random.uniform(0, 1)
             SinTheta = np.sqrt(1-CosTheta**2)
             if random.uniform(0, 1) < 0.5 :
@@ -163,71 +246,23 @@ class Rayleigh(object):
             self.set_outMomTheta(np.arccos(CosTheta))
             self.set_outMomPhi(rand)
 
-            energy = 1
+            energy = self.inE
             px1, py1, pz1 = energy*SinPhi*CosTheta, energy*SinPhi*SinTheta, energy*CosTheta
             self.set_outMom(px1, py1, pz1)
             px1n, py1n, pz1n = CosPhi*SinTheta, SinPhi*SinTheta, CosTheta
             ex0, ey0, ez0 = self.inPol[0], self.inPol[1], self.inPol[2]
 
 
-            beta = random.uniform(0, 1) * 2 * np.pi
-            SinBeta, CosBeta = np.sin(beta), np.cos(beta)
-            N = np.sqrt(1 - SinTheta**2*CosPhi**2)
-            ex1_per, ey1_per, ez1_per = 0, CosTheta*SinBeta/N, -SinTheta*SinPhi/N
-            ex1_par, ey1_par, ez1_par = N*CosBeta, -SinTheta**2*CosBeta*SinPhi*CosPhi/N, -SinTheta*CosTheta*CosPhi*CosBeta/N
-            ex1, ey1, ez1 = ex1_par+ex1_per, ey1_par+ey1_per, ez1_par+ez1_per
-            ex1n, ey1n, ez1n = self.normalize(ex1, ey1, ez1)
+            if py1n == 0 and pz1n == 0 :
+                beta = random.uniform(0, 1) * 2 * np.pi
+                SinBeta, CosBeta = np.sin(beta), np.cos(beta)
 
-
-            cos2Theta = CosBeta**2 * (1 - SinTheta**2*CosPhi**2)
-            cosTheta = np.sqrt(cos2Theta)
-            if ex1n*ex0+ey1n*ey0+ez1n*ez0 < 0:
-                cosTheta = -cosTheta
-
-            if cos2Theta >= random.uniform(0, 1):
-                self.set_outPolBeta(beta)
-                self.set_polAngle(np.arccos(cosTheta))
-                flag = False
-
-
-    def SampleFromTheta(self):
-        self.set_inMom(0, 0, 1)
-        self.set_inPol(1, 0, 0)
-
-        flag = True
-        while flag:
-            Theta = random.uniform(0, 1) * 1 * np.pi
-            if np.cos(Theta)**2 > random.uniform(0, 1):
-                flag = False
-
-            CosTheta = random.uniform(0, 1)
-            SinTheta = np.sqrt(1-CosTheta**2)
-            if random.uniform(0, 1) < 0.5 :
-                CosTheta = -CosTheta
-            
-            rand = 2*np.pi * random.uniform(0, 1)
-            SinPhi = np.sin(rand)
-            CosPhi = np.cos(rand)
-
-            if SinTheta == 1 and CosPhi == 1:
-                beta = random.uniform(0, 1) * 2 *np.pi
             else:
-                Cos2Beta = np.cos(Theta)**2 / (1- SinTheta**2*CosPhi**2)
-                CosBeta = np.sqrt(Cos2Beta)
-                if random.uniform(0, 1) > 0.5:
-                    CosTheta = -CosTheta
-                beta = np.arccos(CosBeta)
-            
+                beta = 0   # required at the plane 
+                if random.uniform(0, 1) < 0.5:
+                    beta = np.pi
+                SinBeta, CosBeta = np.sin(beta), np.cos(beta)
 
-            E = self.inE
-            self.set_outMomTheta(np.arccos(CosTheta))
-            self.set_outMomPhi(rand)
-            self.set_outMom(E*SinTheta*CosPhi, E*SinTheta*SinPhi, E*CosTheta)
-            self.set_outPolBeta(beta)
-            self.set_polAngle(Theta)
-
-
-            SinBeta, CosBeta = np.sin(beta), np.cos(beta)
             N = np.sqrt(1 - SinTheta**2*CosPhi**2)
             ex1_per, ey1_per, ez1_per = 0, CosTheta*SinBeta/N, -SinTheta*SinPhi/N
             ex1_par, ey1_par, ez1_par = N*CosBeta, -SinTheta**2*CosBeta*SinPhi*CosPhi/N, -SinTheta*CosTheta*CosPhi*CosBeta/N
@@ -235,222 +270,16 @@ class Rayleigh(object):
             ex1n, ey1n, ez1n = self.normalize(ex1, ey1, ez1)
             self.set_outPol(ex1n, ey1n, ez1n)
 
+            cos2Theta = CosBeta**2 * (1 - SinTheta**2*CosPhi**2)
+            cosTheta = np.sqrt(cos2Theta)
+            if ex1n*ex0+ey1n*ey0+ez1n*ez0 < 0:
+                cosTheta = -cosTheta
 
-            
-
-            """
-            if py1n == 0 and pz1 == 0 :  ## p // e0
-                rand = np.pi * 2 *random.uniform(0, 1)
-                y, z = np.cos(rand), np.sin(rand)
-                ex1n, ey1n, ez1n = 0, y, z
-                self.set_outPol(0, y, z)
-
-            elif py1n == 0 and pz1n != 0:
-    
-                ## parallel components
-                k1 = 1
-                k2 = -k1 * px1n
-                ex1_par = k1 * 1 + k2 * px1n
-                ey1_par = k2 * py1n
-                ez1_par = k2 * pz1n
-                ex1n_par, ey1n_par, ez1n_par = self.normalize(ex1_par, ey1_par, ez1_par)
-
-                # perpendicular components
-                ex1_per = 0
-                ey1_per = 1
-                ez1_per = -py1n * ey1_par / pz1n
-                ex1n_per, ey1n_per, ez1n_per = self.normalize(ex1_per, ey1_per, ez1_per)
-
-                rand = random.uniform(0, 1) * 2 *np.pi
-                ex1 = np.cos(rand) * ex1n_par + np.sin(rand) * ex1n_per
-                ey1 = np.cos(rand) * ey1n_par + np.sin(rand) * ey1n_per
-                ez1 = np.cos(rand) * ez1n_par + np.sin(rand) * ez1n_per
-                ex1n ,ey1n, ez1n = self.normalize(ex1, ey1, ez1)
-                self.set_outPol(ex1n, ey1n, ez1n)
-
-            
-            else:
-                
-                ## parallel components
-                k1 = 1
-                k2 = -k1 * px1n
-                ex1_par = k1 * 1 + k2 * px1n
-                ey1_par = k2 * py1n
-                ez1_par = k2 * pz1n
-                ex1n_par, ey1n_par, ez1n_par = self.normalize(ex1_par, ey1_par, ez1_par)
-
-                # perpendicular components
-                ex1_per = 0
-                ez1_per = 1
-                ey1_per = -pz1n * ez1_par / py1n
-                ex1n_per, ey1n_per, ez1n_per = self.normalize(ex1_per, ey1_per, ez1_per)
-
-                rand = random.uniform(0, 1) * 2 *np.pi
-                ex1 = np.cos(rand) * ex1n_par + np.sin(rand) * ex1n_per
-                ey1 = np.cos(rand) * ey1n_par + np.sin(rand) * ey1n_per
-                ez1 = np.cos(rand) * ez1n_par + np.sin(rand) * ez1n_per
-                ex1n ,ey1n, ez1n = self.normalize(ex1, ey1, ez1)
-                self.set_outPol(ex1n, ey1n, ez1n)
-
-
-
-            beta = rand
-            #cosTheta = ex1n * ex0 + ey1n * ey0 + ez1n * ez0
-            cosTheta = ex1n
-            if np.cos(beta)**2 * (1 - SinTheta**2 * CosPhi**2) >= random.uniform(0, 1):
+            ### Sampling with CosTheta^2 Law
+            if cos2Theta >= random.uniform(0, 1):
                 self.set_outPolBeta(beta)
                 self.set_polAngle(np.arccos(cosTheta))
-                print(cosTheta**2, np.cos(beta)**2*(1-SinTheta**2*CosPhi**2))
                 flag = False
 
-            """
-
-
-
-
-    def sampleSeconderies(self):   # implementations in G4OpRayleigh class
-        flag = True
-        while flag:
-            CosTheta = random.uniform(0, 1)
-            SinTheta = np.sqrt(1-CosTheta**2)
-            if random.uniform(0, 1) < 0.5 :
-                CosTheta = -CosTheta
-            
-            rand = 2*np.pi * random.uniform(0, 1)
-            SinPhi = np.sin(rand)
-            CosPhi = np.cos(rand)
-
-            tmp_outMomTheta = np.arccos(CosTheta) 
-            self.set_outMomTheta(tmp_outMomTheta)
-            self.set_outMomPhi(rand)
-
-            E = self.inE
-            px0n, py0n, pz0n = self.normalize(self.inMom[0], self.inMom[1], self.inMom[2])
-            self.set_outMom(E*SinTheta*CosPhi, E*SinTheta*SinPhi, E*CosTheta)
-            px1, py1, pz1 = self.rotateUz(px0n, py0n, pz0n, E*SinTheta*CosPhi, E*SinTheta*SinPhi, E*CosTheta)
-            px1n, py1n, pz1n = self.normalize(px1, py1, pz1)
-
-            newMomDirection = vector.obj(x=px1n, y=py1n, z=pz1n)
-            oldPolDirection = vector.obj(x=self.inPol[0], y=self.inPol[1], z=self.inPol[2])
-
-            ### Polarisation
-            C = -1. / (newMomDirection.dot(oldPolDirection))            
-            newPol = newMomDirection + C * oldPolDirection
-            e1, e2, e3 = self.normalize(newPol.x, newPol.y, newPol.z)
-            newPolDirection = vector.obj(x=e1, y=e2, z=e3)
-
-            if newPolDirection.mag == 0:
-                rand = random.uniform(0, 1) * 2 * np.pi
-                tmp_ex1, tmp_ey1, tmp_ez1 = self.rotateUz(px1n, py1n, pz1n, np.cos(rand), np.sin(rand), 0)
-                newPolDirection = vector.obj(x=tmp_ex1, y=tmp_ey1, z=tmp_ez1) 
-
-            else:
-                if random.uniform(0, 1) < 0.5:
-                    newPolDirection = -newPolDirection
-
-            cosTheta = newPolDirection.dot(oldPolDirection)
-
-            if cosTheta**2 > random.uniform(0, 1):
-                flag = False
-
-
-        self.set_outPol(newPolDirection.x, newPolDirection.y, newPolDirection.z)
-        self.set_polAngle(np.arccos(cosTheta))
-
-
-        ex0n, ey0n, ez0n = self.normalize(self.inPol[0], self.inPol[1], self.inPol[2])
-        oldPolDirection = vector.obj(x=ex0n, y=ey0n, z=ez0n)
-        #print("--------------")
-        #print(oldPolDirection)
-        #print(newMomDirection)
-        #print(newPolDirection)
-        #print(newPolDirection.dot(newMomDirection))
-
-    ### From the NIMA Paper
-
-    # Generate Phi :
-    def GeneratePhi(self):
-        phi = 0
-        flag = True
-        while flag:
-            m_phi = random.uniform(0, 1) * 2 * np.pi
-            m_Pr = random.uniform(0, 1) * 1
-            m_Pphir = 1 - np.cos(m_phi)**2
-            if m_Pr <= m_Pphir :  # accept
-                phi = m_phi
-                flag = False
-
-        return phi
-
-
-    ## Generate beta
-    def GeneratePolarization(self):
-        beta = 0
-        flag = True
-        N = np.sqrt(1-np.sin(self.outMomTheta)**2*np.cos(self.outMomPhi)**2)
-        while flag:
-            b = 4 * N**2
-            m_beta = random.uniform(0, 1) * 2 * np.pi
-            m_Pb = random.uniform(0, 1)
-            m_Pbeta = np.cos(m_beta)**2
-            if m_Pb <= m_Pbeta :
-                beta = m_beta
-                flag = False
-        
-        return beta
-
-
-    def LocalSystem(self):
-        self.set_outMomPhi(self.GeneratePhi())
-
-        E = self.inE
-        self.set_outMom(E*np.sin(self.outMomTheta)*np.cos(self.outMomPhi), E*np.sin(self.outMomTheta)*np.sin(self.outMomPhi), E*np.cos(self.outMomTheta))
-
-        N = np.sqrt(1-np.sin(self.outMomTheta)**2*np.cos(self.outMomPhi)**2)
-
-        self.set_outPolBeta(self.GeneratePolarization())
-        self.set_outPol1(0, np.cos(self.outMomTheta)*np.sin(self.outPolBeta)/N, -np.sin(self.outMomTheta)*np.sin(self.outMomPhi)*np.sin(self.outPolBeta)/N )
-        self.set_outPol2(np.cos(self.outPolBeta)*N, -np.sin(self.outMomTheta)**2*np.sin(self.outMomPhi)*np.cos(self.outMomPhi)*np.cos(self.outPolBeta)/N, -np.sin(self.outMomTheta)*np.cos(self.outMomTheta)*np.cos(self.outMomPhi)*np.cos(self.outPolBeta)/N)
-
-        self.set_outPol(self.outPol1[0] + self.outPol2[0] , self.outPol1[1] + self.outPol2[1] , self.outPol1[2] + self.outPol2[2] )
-
-        print(self.outPol)
-
-
-    # from Geant4 codes :
-    def GetPhotonPolarisation(self):
-        tmp_ex0, tmp_ey0, tmp_ez0 = self.inPol
-        tmp_inPol = vector.obj(x=tmp_ex0, y=tmp_ey0, z=tmp_ez0)
-
-        E = self.inE
-        self.set_outMom(E*np.sin(self.outMomTheta)*np.cos(self.outMomPhi), E*np.sin(self.outMomTheta)*np.sin(self.outMomPhi), E*np.cos(self.outMomTheta))
-        tmp_px1, tmp_py1, tmp_pz1 = self.outMom
-        tmp_outMom = vector.obj(x=tmp_px1, y=tmp_py1, z=tmp_pz1)
-
-        if tmp_inPol.is_parallel(tmp_outMom) or tmp_inPol.is_antiparallel(tmp_outMom) :
-            angle = random.uniform(0, 1) * 2*np.pi
-            tmp_outPol = vector.obj(x=np.cos(angle), y=np.sin(angle), z=0)
-            self.set_outPol(tmp_outPol.x, tmp_outPol.y, tmp_outPol.z)
-
-        elif not tmp_inPol.is_perpendicular(tmp_outMom):
-            self.set_outPol(1, 0, 0)
-            if random.uniform(0, 1) < 0.5 :
-                self.set_outPol(-1, 0, 0)
-
-        else:
-            self.set_outPol(tmp_ex0, tmp_ey0, tmp_ez0)   
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    
 
