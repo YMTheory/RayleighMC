@@ -27,72 +27,61 @@ if __name__ == "__main__" :
     ray.calcTensor()
     
     polAng = np.arange(0, 361, 1)
-    Nsample = 10
+    Nsample = 10000
 
-    for i in range(1000):
-        ray.rotateTensor()
-        inPol_mod = ray.get_inPol()
+    polAngle_arr = np.arange(0, 370, 10)
 
-        inPol_modXY = np.sqrt(inPol_mod[0]**2 + inPol_mod[1]**2)
-        inPol_modR = np.sqrt(inPol_mod.dot(inPol_mod))
+    theta_start, theta_stop, theta_step = 90, 100, 10.
+    Nstep = int((theta_stop - theta_start) / theta_step)
+    prob_arr = [[] for i in range(Nstep)]
 
-        theta = np.arccos(inPol_mod[2]/inPol_modR)
-        phi = np.arctan(inPol_mod[1]/inPol_mod[0])
+    count = 0
 
+    for tt in np.arange(theta_start, theta_stop, theta_step):
+        ray.set_outMomTheta(tt/180*np.pi)
+        ray.set_outMomPhi(np.pi/2)
+        ray.set_outMom(ray.get_inE()*np.cos(ray.get_outMomPhi())*np.sin(ray.get_outMomTheta()), ray.get_inE()*np.sin(ray.get_outMomPhi())*np.sin(ray.get_outMomTheta()), ray.get_inE()*np.cos(ray.get_outMomTheta()) )
 
+        outPol_arr = [ [] for i in range(Nsample)]
+        for ii in range(Nsample):
+            ray.set_inPol(1, 0, 0)
+            ray.rotate_inPol()
+            ray.calculatePol()
+            outPol_arr[ii].append(ray.get_outPol()[0])
+            outPol_arr[ii].append(ray.get_outPol()[1])
+            outPol_arr[ii].append(ray.get_outPol()[2])
 
+        detPol1 = np.array([1, 0 ,0])
+        detPol2 = np.array([0, np.cos(tt/180*np.pi), np.sin(tt/180*np.pi)])
 
-    """
-    #start_theta, stop_theta, step_theta = 30., 160., 10.
-    start_theta, stop_theta, step_theta = 90, 100, 10.
-    N_theta = int((stop_theta - start_theta ) /step_theta)
+        for detAngle in polAngle_arr:
+            print("Detection Polarisation Angle : ", detAngle)
+            amp = 0
+            
+            CosAng = np.cos(detAngle/180*np.pi)
+            SinAng = np.sin(detAngle/180*np.pi)
 
-    print("N_theta = %d" %N_theta)
-    Prob = [[] for i in range(N_theta)]
+            detPol = CosAng * detPol1 + SinAng * detPol2
 
-
-    n = 0
-    for angle in np.arange(start_theta, stop_theta, step_theta):
-
-        print("outgoing theta angle : %.1f" %angle)
-
-        ray.set_outMomTheta(angle/180*np.pi)
-        ray.set_outMomPhi(90/180*np.pi)
-
-        detPol2 = np.array([0, np.cos(angle/180*np.pi), np.sin(angle/180*np.pi)])
-
-        for i in polAng:
-            prob = 0
-            print("Polarisation detection angle : %.1f"%i)
-            for j in range(Nsample):
-                # randomly rotate tensor
-                ray.rotateTensor()
-                ray.calculatePol()
-
-                outPol = ray.get_outPol()
-                det.set_inPol(outPol[0], outPol[1], outPol[2])
-                detPol1 = outPol
-
-                CosAng = np.cos(i/180*np.pi)
-                SinAng = np.sin(i/180*np.pi)
-
-                C1 = CosAng 
-                C2 = 1
-
-                detPol = CosAng * detPol1 + SinAng * detPol2
-
+            for photon in outPol_arr:
+                det.set_inPol(photon[0], photon[1], photon[2])
                 det.set_detPol(detPol[0], detPol[1], detPol[2])
-                
-                prob += det.calcDetProb()
-                
-            Prob[n].append(prob)
+                amp += det.calcDetProb()
 
-        n += 1
-     
+            prob_arr[count].append(amp)
+            print(amp)
+
+        count += 1
 
 
     fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
-    for i in range(N_theta):
-        ax.plot(polAng*np.pi/180, Prob[i], lw=2)
+    for i in range(Nstep):
+        ax.plot(polAngle_arr*np.pi/180, prob_arr[i], lw=2)
+    #plt.legend()
     plt.show()
-    """
+
+
+
+    
+
+
