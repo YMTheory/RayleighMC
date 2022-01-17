@@ -1,6 +1,8 @@
 import random
 import numpy as np
 from scipy.spatial.transform import Rotation as R
+import calculateRotationMatrix as rot
+import vector_method as vm
 
 
 class Rayleigh(object):
@@ -45,7 +47,6 @@ class Rayleigh(object):
         self.inPol[2] = z
 
     def set_outMom(self, x, y, z):
-        self.outMom = x, y, z
         self.outMom[0] = x
         self.outMom[1] = y
         self.outMom[2] = z
@@ -172,6 +173,7 @@ class Rayleigh(object):
 
 
     def calcTensor(self):
+        # On the main axes
         alpha = 1
         rho = self.rhov
         beta = (np.sqrt(45*rho)/3 - np.sqrt(3-4*rho)) / (-np.sqrt(3-4*rho) - 2/3*np.sqrt(45*rho))
@@ -181,34 +183,54 @@ class Rayleigh(object):
         self.beta = beta
 
 
+    def rotate_inPol(self):
+        cosThetaLoc = random.uniform(-1, 1)
+        sinThetaLoc = np.sqrt(1 - cosThetaLoc**2)
+        PhiLoc   = random.uniform(0, 2*np.pi)
+        cosPhiLoc = np.cos(PhiLoc)
+        sinPhiLoc = np.sin(PhiLoc)
+        newX1 = np.array([sinThetaLoc*cosPhiLoc, sinThetaLoc*sinPhiLoc, cosThetaLoc])
+        tmp_newX2 = vm.perpendicular_vector(newX1)
+        tmp_newX3 = np.cross(newX1, tmp_newX2)
 
-    def rotateTensor(self):
-        theta1 = random.uniform(0, 2*np.pi)
-        theta2 = random.uniform(0, 2*np.pi)
-        theta3 = random.uniform(0, 2*np.pi)
+        ksi = random.uniform(0, 2*np.pi)
+        newX2 = tmp_newX2 * np.cos(ksi) + tmp_newX3 * np.sin(ksi)
+        newX3 = np.cross(newX1, newX2)
 
-        r = R.from_rotvec([theta1, theta2, theta3])
-        mat = r.as_matrix()
+        crd1 = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        crd2 = np.vstack((newX1, newX2, newX3))
+        rotM = np.matmul(crd1, crd2)
 
-        tensor0 = np.array([[self.alpha, 0, 0], [0, self.beta, 0], [0, 0, self.beta]])
+        T = np.array([[self.alpha, 0, 0], [0, self.beta, 0], [0, 0, self.beta]])
+        T_new = np.matmul(np.matmul(rotM, T), rotM.T)
 
-        tensor = np.matmul(np.matmul(mat.T, tensor0), mat)
-
-        inPol_mod = np.matmul(tensor, self.inPol)
-        inPol_modn1, inPol_modn2, inPol_modn3 = self.normalize(inPol_mod[0], inPol_mod[1], inPol_mod[2])
-
-        self.set_inPol(inPol_modn1, inPol_modn2, inPol_modn3)
+        pol_new = np.matmul(T_new, self.inPol)
+        inpx, inpy, inpz = self.normalize(pol_new[0], pol_new[1], pol_new[2])
+        self.set_inPol(inpx, inpy, inpz)
 
 
-    def calculatePol(self):
-        
-        CosTheta = np.cos(self.outMomTheta)
-        SinTheta = np.sin(self.outMomTheta)
-        CosPhi = np.cos(self.outMomPhi)
-        SinPhi = np.sin(self.outMomPhi)
+
+
+
+    
+    def calculatePol_locally(self):
+
+        self.rotate_inPol()
+
+        vec = np.array([1, 0, 0])
+        ang, ax = rot.rotationAngle(self.inPol, vec), rot.rotationAxis(self.inPol, vec)
+        mat = rot.RotationMatrix(ang, ax)
+        #print("Rotation matrix", mat)
+
+        local_outMom = np.matmul(mat, self.outMom)
+        #print("local outMom : ", local_outMom)
+
+        CosTheta = local_outMom[2] / np.sqrt(local_outMom.dot(local_outMom))
+        SinTheta = np.sqrt(1 - CosTheta**2)
+        CosPhi = local_outMom[0] / np.sqrt(local_outMom[0]**2 + local_outMom[1]**2)
+        SinPhi = local_outMom[1] / np.sqrt(local_outMom[0]**2 + local_outMom[1]**2)
 
         px1n, py1n, pz1n = CosPhi*SinTheta, SinPhi*SinTheta, CosTheta
-        
 
         if py1n == 0 and pz1n == 0 :
             beta = random.uniform(0, 1) * 2 * np.pi
@@ -224,7 +246,55 @@ class Rayleigh(object):
         N = np.sqrt(1 - SinTheta**2*CosPhi**2)
         ex1, ey1, ez1 = N * CosBeta, SinTheta**2*SinPhi*CosPhi/N*CosBeta, SinTheta*CosTheta*CosPhi/N*CosBeta
         ex1n, ey1n, ez1n = self.normalize(ex1, ey1, ez1)
-        self.set_outPol(ex1n, ey1n, ez1n)
+        local_outPol = np.array([ex1n, ey1n, ez1n])
+        global_outPol = np.matmul(np.linalg.inv(mat), local_outPol)
+
+        self.set_outPol(global_outPol[0], global_outPol[1], global_outPol[2])
+
+
+
+    def calculatePol(self):
+        
+        CosTheta = np.cos(self.outMomTheta)
+        SinTheta = np.sin(self.outMomTheta)
+        CosPhi = np.cos(self.outMomPhi)
+        SinPhi = np.sin(self.outMomPhi)
+
+        px1n, py1n, pz1n = CosPhi*SinTheta, SinPhi*SinTheta, CosTheta
+        
+        # This method is based on the paper description 
+        #if py1n == 0 and pz1n == 0 :
+        #    beta = random.uniform(0, 1) * 2 * np.pi
+        #    SinBeta, CosBeta = np.sin(beta), np.cos(beta)
+
+        #else:
+        #    beta = 0   # required at the plane 
+        #    if random.uniform(0, 1) < 0.5:
+        #        beta = np.pi
+        #    SinBeta, CosBeta = np.sin(beta), np.cos(beta)
+
+
+        #N = np.sqrt(1 - SinTheta**2*CosPhi**2)
+        #ex1, ey1, ez1 = N * CosBeta, SinTheta**2*SinPhi*CosPhi/N*CosBeta, SinTheta*CosTheta*CosPhi/N*CosBeta
+        #ex1n, ey1n, ez1n = self.normalize(ex1, ey1, ez1)
+        #self.set_outPol(ex1n, ey1n, ez1n)
+
+        
+        # personal implementations
+        pol0 = self.get_inPol()
+        k = np.array([px1n, py1n, pz1n])
+        cosAng = pol0.dot(k) / np.sqrt(k.dot(k)) / np.sqrt(pol0.dot(pol0))
+        if  cosAng == 1:
+            l1 = vm.perpendicular_vector(pol0)
+            l2 = np.cross(pol0, l1)
+            beta = random.uniform(0, 2*np.pi)
+            tmp = np.cos(beta) * l1 + np.sin(beta) * l2
+            pol1 = self.normalize(tmp[0], tmp[1], tmp[2])
+        else:
+            tmp = pol0 - np.sqrt(pol0.dot(pol0)) * cosAng
+            pol1 = self.normalize(tmp[0], tmp[1], tmp[2])
+
+        self.set_outPol(pol1[0], pol1[1], pol1[2]) 
 
 
 
