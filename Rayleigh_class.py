@@ -284,14 +284,14 @@ class Rayleigh(object):
         pol0 = self.get_inPol()
         k = np.array([px1n, py1n, pz1n])
         cosAng = pol0.dot(k) / np.sqrt(k.dot(k)) / np.sqrt(pol0.dot(pol0))
-        if  cosAng == 1:
+        if  np.abs(cosAng-1)<1e-5:
             l1 = vm.perpendicular_vector(pol0)
             l2 = np.cross(pol0, l1)
             beta = random.uniform(0, 2*np.pi)
             tmp = np.cos(beta) * l1 + np.sin(beta) * l2
             pol1 = self.normalize(tmp[0], tmp[1], tmp[2])
         else:
-            tmp = pol0 - np.sqrt(pol0.dot(pol0)) * cosAng
+            tmp = pol0 - np.sqrt(pol0.dot(pol0)) * cosAng * k
             pol1 = self.normalize(tmp[0], tmp[1], tmp[2])
 
         self.set_outPol(pol1[0], pol1[1], pol1[2]) 
