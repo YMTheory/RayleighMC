@@ -79,7 +79,6 @@ if __name__ == "__main__" :
                     amp += det.calcDetProb()
 
                 prob_arr[count].append(amp)
-                print(amp)
 
             count += 1
 
