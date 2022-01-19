@@ -30,19 +30,20 @@ if __name__ == "__main__" :
     
     Nsample = 10000
 
-    ver_flag = True
-    hor_flag = False
+    ver_flag = False
+    hor_flag = True
 
     color_arr = ["blue", "red", "purple", "orange", "gray", "green", "black", "royalblue"]
     polAngle_arr = np.arange(0, 361, 1)
 
-    theta_start, theta_stop, theta_step = 60, 130, 10
+    theta_start, theta_stop, theta_step = 30, 100, 10
     Nstep = int((theta_stop - theta_start) / theta_step)
     
     fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
 
     if ver_flag:
         prob_arr = [[] for i in range(Nstep)]
+        scatProb = 1
 
         count = 0
 
@@ -78,7 +79,8 @@ if __name__ == "__main__" :
                     det.set_detPol(detPol[0], detPol[1], detPol[2])
                     amp += det.calcDetProb()
 
-                prob_arr[count].append(amp)
+                #scatProb = ray.get_scatProb()
+                prob_arr[count].append(amp * scatProb)
 
             count += 1
 
@@ -89,13 +91,14 @@ if __name__ == "__main__" :
 
     if hor_flag :
         prob_arr = [[] for i in range(Nstep)]
+        scatProb = 1
 
         count = 0
 
         for tt in tqdm(np.arange(theta_start, theta_stop, theta_step)):
             print("Detecting at theta = %d degree" %tt)
             ray.set_outMomTheta(tt/180*np.pi)
-            ray.set_outMomPhi(np.pi/2)
+            ray.set_outMomPhi(3*np.pi/2)
             ray.set_outMom(ray.get_inE()*np.cos(ray.get_outMomPhi())*np.sin(ray.get_outMomTheta()), ray.get_inE()*np.sin(ray.get_outMomPhi())*np.sin(ray.get_outMomTheta()), ray.get_inE()*np.cos(ray.get_outMomTheta()) )
 
             outPol_arr = [ [] for i in range(Nsample)]
@@ -125,7 +128,8 @@ if __name__ == "__main__" :
                     amp += det.calcDetProb()
                     #print(ray.get_inPol(), ray.get_outMom(), det.get_inPol(), det.get_detPol(), det.calcDetProb())
 
-                prob_arr[count].append(amp)
+                scatProb = ray.get_scatProb()
+                prob_arr[count].append(amp * scatProb)
                 #print(amp)
 
             count += 1
@@ -135,7 +139,18 @@ if __name__ == "__main__" :
             ax.plot(polAngle_arr*np.pi/180, prob_arr[i], lw=2, label="theta=%d deg"%(theta_start + i*theta_step))
     plt.legend()
     
-    plt.savefig("Isotropic_inPol100.pdf")
+    plt.savefig("Isotropic_inPol0:00.pdf")
+
+
+
+    idx = 90   # horizontal
+    theta_arr = np.arange(theta_start, theta_stop, theta_step)
+    prob90 = [prob_arr[i][idx] for i in range(Nstep)]
+    fig1, ax1 = plt.subplots()
+    ax1.plot(theta_arr, prob90, "o")
+    print(theta_arr)
+    print(prob90)
+    plt.savefig("Hh90.pdf")
 
     plt.show()
 
