@@ -187,30 +187,45 @@ class Rayleigh(object):
         beta = (np.sqrt(45*rho)/3 - np.sqrt(3-4*rho)) / (-np.sqrt(3-4*rho) - 2/3*np.sqrt(45*rho))
         #beta = (np.sqrt(45*rho)/3 + np.sqrt(3-4*rho)) / (np.sqrt(3-4*rho) -2/3*np.sqrt(45*rho))
 
+        #self.alpha = np.sqrt(alpha)
+        #self.beta = np.sqrt(beta)
         self.alpha = alpha
         self.beta = beta
 
 
     def rotate_inPol(self):
-        cosThetaLoc = random.uniform(-1, 1)
-        sinThetaLoc = np.sqrt(1 - cosThetaLoc**2)
-        PhiLoc   = random.uniform(0, 2*np.pi)
-        cosPhiLoc = np.cos(PhiLoc)
-        sinPhiLoc = np.sin(PhiLoc)
-        newX1 = np.array([sinThetaLoc*cosPhiLoc, sinThetaLoc*sinPhiLoc, cosThetaLoc])
-        tmp_newX2 = vm.perpendicular_vector(newX1)
-        tmp_newX3 = np.cross(newX1, tmp_newX2)
+        # My own implementations based on symmetry
+        #cosThetaLoc = random.uniform(-1, 1)
+        #sinThetaLoc = np.sqrt(1 - cosThetaLoc**2)
+        #PhiLoc   = random.uniform(0, 2*np.pi)
+        #cosPhiLoc = np.cos(PhiLoc)
+        #sinPhiLoc = np.sin(PhiLoc)
+        #newX1 = np.array([sinThetaLoc*cosPhiLoc, sinThetaLoc*sinPhiLoc, cosThetaLoc])
+        #tmp_newX2 = vm.perpendicular_vector(newX1)
+        #tmp_newX3 = np.cross(newX1, tmp_newX2)
 
-        ksi = random.uniform(0, 2*np.pi)
-        newX2 = tmp_newX2 * np.cos(ksi) + tmp_newX3 * np.sin(ksi)
-        newX3 = np.cross(newX1, newX2)
+        #ksi = random.uniform(0, 2*np.pi)
+        #newX2 = tmp_newX2 * np.cos(ksi) + tmp_newX3 * np.sin(ksi)
+        #newX3 = np.cross(newX1, newX2)
 
-        crd1 = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-        crd2 = np.vstack((newX1, newX2, newX3))
-        rotM = np.matmul(crd1, crd2)
+        #crd1 = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        #crd2 = np.vstack((newX1, newX2, newX3))
+        #rotM = np.matmul(crd1, crd2)
+
+        # based on scipy random transform
+        p = R.random(1).as_matrix()[0]
+        rotM = R.from_matrix(p) 
+        rotM_inv = rotM.inv()
+        p_inv = R.as_matrix(rotM_inv)
+
+        # check with fixed rotation
+        #rotM = R.from_euler('zyx', [[60, 30, 30]], degrees=True)
+        #rotM_inv = rotM.inv()
+        #p = R.as_matrix(rotM)[0]
+        #p_inv = R.as_matrix(rotM_inv)[0]
 
         T = np.array([[self.alpha, 0, 0], [0, self.beta, 0], [0, 0, self.beta]])
-        T_new = np.matmul(np.matmul(rotM, T), rotM.T)
+        T_new = np.matmul(np.matmul(p, T), p_inv)
 
         pol_new = np.matmul(T_new, self.inPol)
         inpx, inpy, inpz = self.normalize(pol_new[0], pol_new[1], pol_new[2])
