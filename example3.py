@@ -26,7 +26,7 @@ if __name__ == "__main__" :
     ray.set_inMom(0, 0, 1)     # incident light momentum
     ray.set_inPol(1, 0, 0)     # incident light polarisation
     
-    rhou_arr = np.arange(0, 0.8, 0.1)
+    rhou_arr = np.arange(0, 0.6, 0.1)
     rhov_arr = []
     Nrhou = len(rhou_arr)
     Hh, Hv, Vh, Vv = [], [], [], []
