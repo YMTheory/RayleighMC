@@ -31,6 +31,7 @@ class Rayleigh(object):
         self.alpha = 0.
         self.beta = 0.
 
+        self.scale = 1.
         self.scatProb = 1.
 
     def get_inE(self):
@@ -231,8 +232,15 @@ class Rayleigh(object):
         inpx, inpy, inpz = self.normalize(pol_new[0], pol_new[1], pol_new[2])
         self.set_inPol(inpx, inpy, inpz)
 
+        self.scale = (pol_new.dot(pol_new))
 
-
+        ## energy loss in re-polarisation ????
+        #inP = self.get_inPol()
+        #inM = self.get_inMom()
+        #vanish_prob = inP.dot(inM)
+        #sample = random.uniform(0, 1)
+        #if sample < vanish_prob:
+        #    self.scatProb = 0
 
 
     
@@ -273,53 +281,59 @@ class Rayleigh(object):
         global_outPol = np.matmul(np.linalg.inv(mat), local_outPol)
 
         self.set_outPol(global_outPol[0], global_outPol[1], global_outPol[2])
+        
 
 
 
     def calculatePol(self):
         
-        CosTheta = np.cos(self.outMomTheta)
-        SinTheta = np.sin(self.outMomTheta)
-        CosPhi = np.cos(self.outMomPhi)
-        SinPhi = np.sin(self.outMomPhi)
-
-        px1n, py1n, pz1n = CosPhi*SinTheta, SinPhi*SinTheta, CosTheta
-        
-        # This method is based on the paper description 
-        #if py1n == 0 and pz1n == 0 :
-        #    beta = random.uniform(0, 1) * 2 * np.pi
-        #    SinBeta, CosBeta = np.sin(beta), np.cos(beta)
-
-        #else:
-        #    beta = 0   # required at the plane 
-        #    if random.uniform(0, 1) < 0.5:
-        #        beta = np.pi
-        #    SinBeta, CosBeta = np.sin(beta), np.cos(beta)
-
-
-        #N = np.sqrt(1 - SinTheta**2*CosPhi**2)
-        #ex1, ey1, ez1 = N * CosBeta, SinTheta**2*SinPhi*CosPhi/N*CosBeta, SinTheta*CosTheta*CosPhi/N*CosBeta
-        #ex1n, ey1n, ez1n = self.normalize(ex1, ey1, ez1)
-        #self.set_outPol(ex1n, ey1n, ez1n)
-
-        
-        # personal implementations
-        pol0 = self.get_inPol()
-        k = np.array([px1n, py1n, pz1n])
-        cosAng = pol0.dot(k) / np.sqrt(k.dot(k)) / np.sqrt(pol0.dot(pol0))
-        if  np.abs(cosAng-1)<1e-5:
-            l1 = vm.perpendicular_vector(pol0)
-            l2 = np.cross(pol0, l1)
-            beta = random.uniform(0, 2*np.pi)
-            tmp = np.cos(beta) * l1 + np.sin(beta) * l2
-            pol1 = self.normalize(tmp[0], tmp[1], tmp[2])
+        if self.scatProb == 0:
+            self.scatProb = 0
+            self.set_outPol(1, 0, 0)     # temporary
         else:
-            tmp = pol0 - np.sqrt(pol0.dot(pol0)) * cosAng * k
-            pol1 = self.normalize(tmp[0], tmp[1], tmp[2])
+            CosTheta = np.cos(self.outMomTheta)
+            SinTheta = np.sin(self.outMomTheta)
+            CosPhi = np.cos(self.outMomPhi)
+            SinPhi = np.sin(self.outMomPhi)
 
-        self.set_outPol(pol1[0], pol1[1], pol1[2]) 
+            px1n, py1n, pz1n = CosPhi*SinTheta, SinPhi*SinTheta, CosTheta
+            
+            # This method is based on the paper description 
+            #if py1n == 0 and pz1n == 0 :
+            #    beta = random.uniform(0, 1) * 2 * np.pi
+            #    SinBeta, CosBeta = np.sin(beta), np.cos(beta)
 
-        self.scatProb = self.inPol.dot(self.outPol)**2
+            #else:
+            #    beta = 0   # required at the plane 
+            #    if random.uniform(0, 1) < 0.5:
+            #        beta = np.pi
+            #    SinBeta, CosBeta = np.sin(beta), np.cos(beta)
+
+
+            #N = np.sqrt(1 - SinTheta**2*CosPhi**2)
+            #ex1, ey1, ez1 = N * CosBeta, SinTheta**2*SinPhi*CosPhi/N*CosBeta, SinTheta*CosTheta*CosPhi/N*CosBeta
+            #ex1n, ey1n, ez1n = self.normalize(ex1, ey1, ez1)
+            #self.set_outPol(ex1n, ey1n, ez1n)
+
+            
+            # personal implementations
+            pol0 = self.get_inPol()
+            k = np.array([px1n, py1n, pz1n])
+            cosAng = pol0.dot(k) / np.sqrt(k.dot(k)) / np.sqrt(pol0.dot(pol0))
+            if  np.abs(cosAng-1)<1e-5:
+                l1 = vm.perpendicular_vector(pol0)
+                l2 = np.cross(pol0, l1)
+                beta = random.uniform(0, 2*np.pi)
+                tmp = np.cos(beta) * l1 + np.sin(beta) * l2
+                pol1 = self.normalize(tmp[0], tmp[1], tmp[2])
+            else:
+                tmp = pol0 - np.sqrt(pol0.dot(pol0)) * cosAng * k
+                pol1 = self.normalize(tmp[0], tmp[1], tmp[2])
+
+            self.set_outPol(pol1[0], pol1[1], pol1[2]) 
+
+            self.scatProb = self.inPol.dot(self.outPol)**2
+            self.scatProb *= self.scale
 
 
 
