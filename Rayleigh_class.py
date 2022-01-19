@@ -31,6 +31,8 @@ class Rayleigh(object):
         self.alpha = 0.
         self.beta = 0.
 
+        self.scatProb = 1.
+
     def get_inE(self):
         return self.inE
 
@@ -92,6 +94,12 @@ class Rayleigh(object):
 
     def get_beta(self):
         return self.beta
+
+    def get_scatProb(self):
+        return self.scatProb
+
+    def set_scatPron(self, prob):
+        self.scatProb = prob
 
 
 
@@ -296,6 +304,7 @@ class Rayleigh(object):
 
         self.set_outPol(pol1[0], pol1[1], pol1[2]) 
 
+        self.scatProb = self.inPol.dot(self.outPol)**2
 
 
 
