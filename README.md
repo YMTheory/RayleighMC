@@ -18,4 +18,10 @@ A toy MC program for Rayleigh scattering angular / polarisation simulation.
 
 ## Usage:
 - example1.py : for isotropic molecules. Detect scatterred light at certain direction with polariser.
-- example2.py : for anisotropic molecules. Detect scatterred light at certain direction with polariser.
+- example2.py : for anisotropic molecules. Detect scatterred light at certain direction with polariser. Validate Hh angular distribution.
+- example3.py : at Phi=270 deg, check if the rho_v == Hv/Vv for different input rhov.
+- example4.py : plan to compare MC sim and measurement data.
+
+
+## Potential Problems:
+1. Normalization of polarisability tensor
