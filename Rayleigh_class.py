@@ -13,6 +13,7 @@ class Rayleigh(object):
         self.outMom = np.array([0., 0., 0.])
         self.outPol = np.array([0., 0., 0.])
         self.inE = 1
+        self.midPol = np.array([1., 0., 0.])
 
         self.nPhoton = 1
 
@@ -43,6 +44,12 @@ class Rayleigh(object):
         self.inMom[1] = y
         self.inMom[2] = z
         self.inE = np.sqrt(x**2+y**2+z**2)
+
+
+    def set_midPol(self, x, y, z):
+        self.midPol[0] = x
+        self.midPol[1] = y
+        self.midPol[2] = z
 
     def set_inPol(self, x, y, z):
         self.inPol[0] = x
@@ -137,6 +144,9 @@ class Rayleigh(object):
     def get_inPol(self):
         return self.inPol
 
+    def get_midPol(self):
+        return self.midPol
+
     def get_inMomTheta(self):
         return self.inMomTheta
 
@@ -230,9 +240,15 @@ class Rayleigh(object):
 
         pol_new = np.matmul(T_new, self.inPol)
         inpx, inpy, inpz = self.normalize(pol_new[0], pol_new[1], pol_new[2])
+        cosTheta2 = (inpx*self.inPol[0] + inpy*self.inPol[1] + inpz*self.inPol[2])**2
+        #print("cosTheta2 = ", cosTheta2)
         self.set_inPol(inpx, inpy, inpz)
 
+        #self.scale = cosTheta2
         self.scale = (pol_new.dot(pol_new))
+        #print("scale factor = ", self.scale)
+
+
 
         ## energy loss in re-polarisation ????
         #inP = self.get_inPol()
@@ -241,6 +257,76 @@ class Rayleigh(object):
         #sample = random.uniform(0, 1)
         #if sample < vanish_prob:
         #    self.scatProb = 0
+
+
+
+    def rotate_inPol_twice(self):
+    
+        scale = 1.
+
+        # 1st rotation 
+        p = R.random(1).as_matrix()[0]
+        rotM = R.from_matrix(p) 
+        rotM_inv = rotM.inv()
+        p_inv = R.as_matrix(rotM_inv)
+
+        T = np.array([[self.alpha, 0, 0], [0, self.beta, 0], [0, 0, self.beta]])
+        T_new = np.matmul(np.matmul(p, T), p_inv)
+
+        pol_new = np.matmul(T_new, self.inPol)
+        inpx, inpy, inpz = self.normalize(pol_new[0], pol_new[1], pol_new[2])
+        self.set_midPol(inpx, inpy, inpz)
+        inPol1 = self.inPol.reshape(3, 1)
+
+        scale *= (np.matmul(self.midPol, np.matmul(T_new, inPol1)))**2
+        
+        # 2nd rotation 
+        p = R.random(1).as_matrix()[0]
+        rotM = R.from_matrix(p) 
+        rotM_inv = rotM.inv()
+        p_inv = R.as_matrix(rotM_inv)
+
+        T = np.array([[self.alpha, 0, 0], [0, self.beta, 0], [0, 0, self.beta]])
+        T_new = np.matmul(np.matmul(p, T), p_inv)
+
+        pol_new = np.matmul(T_new, self.inPol)
+        inpx, inpy, inpz = self.normalize(pol_new[0], pol_new[1], pol_new[2])
+        self.set_midPol(inpx, inpy, inpz)
+
+        # sample scattering light
+        if self.scatProb == 0:
+            self.scatProb = 0
+            self.set_outPol(1, 0, 0)     # temporary
+        else:
+            CosTheta = np.cos(self.outMomTheta)
+            SinTheta = np.sin(self.outMomTheta)
+            CosPhi = np.cos(self.outMomPhi)
+            SinPhi = np.sin(self.outMomPhi)
+
+            px1n, py1n, pz1n = CosPhi*SinTheta, SinPhi*SinTheta, CosTheta
+            
+            pol0 = self.get_midPol()
+            k = np.array([px1n, py1n, pz1n])
+            cosAng = pol0.dot(k) / np.sqrt(k.dot(k)) / np.sqrt(pol0.dot(pol0))
+            if  np.abs(cosAng-1)<1e-5:
+                l1 = vm.perpendicular_vector(pol0)
+                l2 = np.cross(pol0, l1)
+                beta = random.uniform(0, 2*np.pi)
+                tmp = np.cos(beta) * l1 + np.sin(beta) * l2
+                pol1 = self.normalize(tmp[0], tmp[1], tmp[2])
+            else:
+                tmp = pol0 - np.sqrt(pol0.dot(pol0)) * cosAng * k
+                pol1 = self.normalize(tmp[0], tmp[1], tmp[2])
+
+            self.set_outPol(pol1[0], pol1[1], pol1[2]) 
+            
+
+            #scale *= (self.midPol.dot(self.outPol))**2
+
+            scale *= (np.matmul(self.outPol, np.matmul(T_new, inPol1)))**2
+
+        self.scatProb = scale
+    
 
 
     
