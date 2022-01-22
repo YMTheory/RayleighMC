@@ -26,25 +26,25 @@ if __name__ == "__main__" :
     ray.set_inPol(1, 0, 0)     # incident light polarisation
     
     # sef depolarisation ratio
-    ray.set_rhou(0.30)      # LAB case
+    ray.set_rhov(0.18)      # LAB case
     ray.calcTensor()
 
     #### output depolarisation related properties ############
     print("======================================")
-    print(r"$\rho_v$ = %.2f" %ray.get_rhov())
-    print(r"$\rho_u$ = %.2f" %ray.get_rhou())
-    print(r"$\alpha$ = %.2f, $\beta$ = %.2f" %(ray.get_alpha(), ray.get_beta()))
+    print(r"$\rho_v$ = %.3f" %ray.get_rhov())
+    print(r"$\rho_u$ = %.3f" %ray.get_rhou())
+    print(r"$\alpha$ = %.3f, $\beta$ = %.3f" %(ray.get_alpha(), ray.get_beta()))
     print("======================================")
 
     
-    ver_flag = False
+    ver_flag = True
     hor_flag = True
 
     Nsample = 10000
 
     polAngle_arr = np.arange(0, 361, 1)
 
-    theta_start, theta_stop, theta_step = 30, 100, 10.
+    theta_start, theta_stop, theta_step = 90, 100, 10.
     Nstep = int((theta_stop - theta_start) / theta_step)
 
     if ver_flag:
@@ -62,8 +62,9 @@ if __name__ == "__main__" :
             amp_arr = []
             for ii in range(Nsample):
                 ray.set_inPol(1, 0, 0)
-                ray.rotate_inPol()
-                ray.calculatePol()
+                #ray.rotate_inPol()
+                #ray.calculatePol()
+                ray.rotate_inPol_twice()
                 outPol_arr[ii].append(ray.get_outPol()[0])
                 outPol_arr[ii].append(ray.get_outPol()[1])
                 outPol_arr[ii].append(ray.get_outPol()[2])
@@ -92,14 +93,14 @@ if __name__ == "__main__" :
         print("Vertical incident light: %.2f, %.2f" %(prob_arr[0][0], prob_arr[0][90]) )
 
         for i in range(Nstep):
-            ax.plot(polAngle_arr*np.pi/180-np.pi/2, prob_arr[i], lw=2)
+            ax.plot(polAngle_arr*np.pi/180-np.pi/2, prob_arr[i], lw=2, label="vertically incident")
         ax.set_yticklabels([])
         #plt.legend()
 
 
 
     if hor_flag:
-        prob_arr = [[] for i in range(Nstep)]
+        prob_arrH = [[] for i in range(Nstep)]
         amp_arr = []
 
         count = 0
@@ -113,8 +114,9 @@ if __name__ == "__main__" :
             amp_arr = []
             for ii in range(Nsample):
                 ray.set_inPol(0, 1, 0)
-                ray.rotate_inPol()
-                ray.calculatePol()
+                #ray.rotate_inPol()
+                #ray.calculatePol()
+                ray.rotate_inPol_twice()
                 outPol_arr[ii].append(ray.get_outPol()[0])
                 outPol_arr[ii].append(ray.get_outPol()[1])
                 outPol_arr[ii].append(ray.get_outPol()[2])
@@ -136,20 +138,39 @@ if __name__ == "__main__" :
                     det.set_detPol(detPol[0], detPol[1], detPol[2])
                     amp += det.calcDetProb() * amp_arr[idx]
 
-                prob_arr[count].append(amp)
+                prob_arrH[count].append(amp)
 
             count += 1
 
         #print("Horizontal incident light: %.2f, %.2f" %(prob_arr[0][0], prob_arr[0][90]) )
 
         for i in range(Nstep):
-            print("Horizontal incident light: %.2f" %((prob_arr[i][270]+prob_arr[i][90])/2.) )
-            ax.plot(polAngle_arr*np.pi/180-np.pi/2, prob_arr[i], lw=2)
+            ax.plot(polAngle_arr*np.pi/180-np.pi/2, prob_arrH[i], lw=2, label="horizontally incident")
         ax.set_yticklabels([])
-        #plt.legend()
+        plt.legend()
 
+    fig, ax1 = plt.subplots()
+    Hh, Hh1 = [], []
+    Vh, Hv, Vv = [], [], []
+    for i in range(Nstep):
+        Vh.append( (prob_arrH[i][0] + prob_arrH[i][180] ) /2.)
+        Hh.append( (prob_arrH[i][90] + prob_arrH[i][270]) /2.)
+        Vv.append( (prob_arr[i][0] + prob_arr[i][180] ) /2.)
+        Hv.append(  (prob_arr[i][90] + prob_arr[i][270]) /2. )
+        ang1 = (theta_start + i * theta_step ) / 180.*np.pi
+        Hh1.append( np.cos(ang1)**2 * Vv[-1] + np.sin(ang1)**2 * Hv[-1] )
+
+        #Hh1.append(np.cos((theta_start + theta_step*i)/180.*np.pi)**2 * Hv + np.sin((theta_start + i*theta_step)/180.*np.pi)**2 * Vv)
     
-    #plt.savefig("Anisotropic_rhou03_HorVer_Theta90.pdf")
+    ax1.plot(np.arange(theta_start, theta_stop, theta_step), Hh, "o-", label="simulation")
+    ax1.plot(np.arange(theta_start, theta_stop, theta_step), Hh1, "v-", label="calculation")
+    #ax1.plot(np.arange(theta_start, theta_stop, theta_step), Hv, "o-", label="Hv")
+    #ax1.plot(np.arange(theta_start, theta_stop, theta_step), Vh, "o-", label="Vh")
+    #ax1.plot(np.arange(theta_start, theta_stop, theta_step), Vv, "o-", label="Vv")
+    ax1.legend()
+    ax1.set_xlabel("Theta [deg]")
+    ax1.set_ylabel("Hh")
+    #plt.savefig("Anisotropic_rhou03_scale_HorVer_Theta90.pdf")
     plt.show()
     
     
