@@ -273,10 +273,10 @@ class Rayleigh(object):
         T = np.array([[self.alpha, 0, 0], [0, self.beta, 0], [0, 0, self.beta]])
         T_new = np.matmul(np.matmul(p, T), p_inv)
 
-        pol_new = np.matmul(T_new, self.inPol)
+        inPol1 = self.inPol.reshape(3, 1)
+        pol_new = np.matmul(T_new, inPol1)
         inpx, inpy, inpz = self.normalize(pol_new[0], pol_new[1], pol_new[2])
         self.set_midPol(inpx, inpy, inpz)
-        inPol1 = self.inPol.reshape(3, 1)
 
         scale *= (np.matmul(self.midPol, np.matmul(T_new, inPol1)))**2
         
@@ -289,7 +289,8 @@ class Rayleigh(object):
         T = np.array([[self.alpha, 0, 0], [0, self.beta, 0], [0, 0, self.beta]])
         T_new = np.matmul(np.matmul(p, T), p_inv)
 
-        pol_new = np.matmul(T_new, self.inPol)
+        #pol_new = np.matmul(T_new, self.inPol)
+        pol_new = np.matmul(T_new, inPol1)
         inpx, inpy, inpz = self.normalize(pol_new[0], pol_new[1], pol_new[2])
         self.set_midPol(inpx, inpy, inpz)
 
