@@ -18,10 +18,10 @@ if __name__ == "__main__" :
     ray.set_rhov(0.18)
     ray.calcTensor()
 
-    ray.set_inPol(1, 0, 0)
+    ray.set_inPol(0, 1, 0)
     ray.set_inMom(0, 0, 1)
 
-    Nphoton = 50000
+    Nphoton = 10000
     photon_momx = []
     photon_momy = []
     photon_momz = []
@@ -30,11 +30,18 @@ if __name__ == "__main__" :
     photon_polz = []
 
     for i in tqdm(range(Nphoton)):
+
+        #beta = random.uniform(0, 2*np.pi)
+        #polx = np.cos(beta)
+        #poly = np.sin(beta)
+        #ray.set_inPol(polx, poly, 0)
+
         flag = True
 
         while flag:
             phi = random.uniform(0, 2*np.pi)
-            theta = random.uniform(0, np.pi)
+            costheta = random.uniform(-1, 1)
+            theta = np.arccos(costheta)
 
             ray.set_outMomTheta(theta)
             ray.set_outMomPhi(phi)
@@ -62,7 +69,7 @@ if __name__ == "__main__" :
     photon_poly = np.array(photon_poly)
     photon_polz = np.array(photon_polz)
 
-    with uproot3.recreate("scattering.root") as f:
+    with uproot3.recreate("./rootfiles/"+sys.argv[1]) as f:
         f["Ray"] = uproot3.newtree({"photon_momx" : "float64", "photon_momy" : "float64", "photon_momz":"float64", "photon_polx":"float64", "photon_poly":"float64", "photon_polz":"float64"})
         f["Ray"].extend({"photon_momx" : photon_momx, "photon_momy" : photon_momy, "photon_momz":photon_momz, "photon_polx":photon_polx, "photon_poly":photon_poly, "photon_polz":photon_polz})
 
