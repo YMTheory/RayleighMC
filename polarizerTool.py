@@ -1,7 +1,7 @@
 import numpy as np
 from Rayleigh_class import Rayleigh
 from detector import detector
-from tqdm import tqdm
+#from tqdm import tqdm
 
 
 def generator(px, py, pz, rhov, tt):
@@ -42,7 +42,8 @@ def generator(px, py, pz, rhov, tt):
 
     outPol_arr = [ [] for i in range(Nsample)]
     amp_arr = []
-    for ii in tqdm(range(Nsample)):
+    for ii in range(Nsample):
+    #for ii in tqdm(range(Nsample)):
         ray.set_inPol(px, py, pz)
         #ray.rotate_inPol()
         #ray.calculatePol()

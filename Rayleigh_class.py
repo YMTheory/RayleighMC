@@ -259,6 +259,57 @@ class Rayleigh(object):
         #    self.scatProb = 0
 
 
+    def rotate_inPol_once(self):
+        scale = 1.
+
+        p = R.random(1).as_matrix()[0]
+        rotM = R.from_matrix(p) 
+        rotM_inv = rotM.inv()
+        p_inv = R.as_matrix(rotM_inv)
+
+        T = np.array([[self.alpha, 0, 0], [0, self.beta, 0], [0, 0, self.beta]])
+        T_new = np.matmul(np.matmul(p, T), p_inv)
+
+        #pol_new = np.matmul(T_new, self.inPol)
+        inPol1 = self.inPol.reshape(3, 1)
+        pol_new = np.matmul(T_new, inPol1)
+        inpx, inpy, inpz = self.normalize(pol_new[0], pol_new[1], pol_new[2])
+        self.set_midPol(inpx, inpy, inpz)
+
+        # sample scattering light
+        if self.scatProb == 0:
+            self.scatProb = 0
+            self.set_outPol(1, 0, 0)     # temporary
+        else:
+            CosTheta = np.cos(self.outMomTheta)
+            SinTheta = np.sin(self.outMomTheta)
+            CosPhi = np.cos(self.outMomPhi)
+            SinPhi = np.sin(self.outMomPhi)
+
+            px1n, py1n, pz1n = CosPhi*SinTheta, SinPhi*SinTheta, CosTheta
+            
+            pol0 = self.get_midPol()
+            k = np.array([px1n, py1n, pz1n])
+            cosAng = pol0.dot(k) / np.sqrt(k.dot(k)) / np.sqrt(pol0.dot(pol0))
+            if  np.abs(cosAng-1)<1e-5:
+                l1 = vm.perpendicular_vector(pol0)
+                l2 = np.cross(pol0, l1)
+                beta = random.uniform(0, 2*np.pi)
+                tmp = np.cos(beta) * l1 + np.sin(beta) * l2
+                pol1 = self.normalize(tmp[0], tmp[1], tmp[2])
+            else:
+                tmp = pol0 - np.sqrt(pol0.dot(pol0)) * cosAng * k
+                pol1 = self.normalize(tmp[0], tmp[1], tmp[2])
+
+            self.set_outPol(pol1[0], pol1[1], pol1[2]) 
+            
+
+            scale *= (np.matmul(self.outPol, np.matmul(T_new, inPol1)))**2
+
+        self.scatProb = scale
+    
+
+
 
     def rotate_inPol_twice(self):
     
@@ -271,14 +322,14 @@ class Rayleigh(object):
         p_inv = R.as_matrix(rotM_inv)
 
         T = np.array([[self.alpha, 0, 0], [0, self.beta, 0], [0, 0, self.beta]])
-        T_new = np.matmul(np.matmul(p, T), p_inv)
+        T_new1 = np.matmul(np.matmul(p, T), p_inv)
 
         inPol1 = self.inPol.reshape(3, 1)
-        pol_new = np.matmul(T_new, inPol1)
+        pol_new = np.matmul(T_new1, inPol1)
         inpx, inpy, inpz = self.normalize(pol_new[0], pol_new[1], pol_new[2])
         self.set_midPol(inpx, inpy, inpz)
 
-        scale *= (np.matmul(self.midPol, np.matmul(T_new, inPol1)))**2
+        scale *= (np.matmul(self.midPol, np.matmul(T_new1, inPol1)))**2
         
         # 2nd rotation 
         p = R.random(1).as_matrix()[0]

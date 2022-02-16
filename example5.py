@@ -15,13 +15,16 @@ if __name__ == "__main__" :
     ray = Rayleigh()
     det = detector()
 
-    ray.set_rhov(0.18)
+    ray.set_rhov(0.200)
     ray.calcTensor()
 
     ray.set_inPol(0, 1, 0)
     ray.set_inMom(0, 0, 1)
 
-    Nphoton = 10000
+    Nphoton = 100000
+    in_polx = []
+    in_poly = []
+    in_polz = []
     photon_momx = []
     photon_momy = []
     photon_momz = []
@@ -31,10 +34,16 @@ if __name__ == "__main__" :
 
     for i in tqdm(range(Nphoton)):
 
+        
+        #beta = 0.
         #beta = random.uniform(0, 2*np.pi)
-        #polx = np.cos(beta)
-        #poly = np.sin(beta)
-        #ray.set_inPol(polx, poly, 0)
+        beta = np.pi/2
+        polx = np.cos(beta)
+        poly = np.sin(beta)
+        ray.set_inPol(polx, poly, 0)
+        in_polx.append(polx)
+        in_poly.append(poly)
+        in_polz.append(0)
 
         flag = True
 
@@ -70,7 +79,7 @@ if __name__ == "__main__" :
     photon_polz = np.array(photon_polz)
 
     with uproot3.recreate("./rootfiles/"+sys.argv[1]) as f:
-        f["Ray"] = uproot3.newtree({"photon_momx" : "float64", "photon_momy" : "float64", "photon_momz":"float64", "photon_polx":"float64", "photon_poly":"float64", "photon_polz":"float64"})
-        f["Ray"].extend({"photon_momx" : photon_momx, "photon_momy" : photon_momy, "photon_momz":photon_momz, "photon_polx":photon_polx, "photon_poly":photon_poly, "photon_polz":photon_polz})
+        f["Ray"] = uproot3.newtree({"in_polx":"float64", "in_poly":"float64", "in_polz":"float64", "photon_momx" : "float64", "photon_momy" : "float64", "photon_momz":"float64", "photon_polx":"float64", "photon_poly":"float64", "photon_polz":"float64"})
+        f["Ray"].extend({"in_polx":in_polx, "in_poly":in_poly, "in_polz":in_polz, "photon_momx" : photon_momx, "photon_momy" : photon_momy, "photon_momz":photon_momz, "photon_polx":photon_polx, "photon_poly":photon_poly, "photon_polz":photon_polz})
 
 
