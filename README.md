@@ -1,6 +1,6 @@
 # RayleighMC
 
-\textbf{Author: Miao Yu -> miaoyu@whu.edu.cn}
+**Author: Miao Yu -> miaoyu@whu.edu.cn**
 
 MC program for angular / polarisation simulation of Rayleigh scattered photons of anisotropic molecules.
 
