@@ -48,34 +48,32 @@ void RayPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
     G4String particleName;
     G4ParticleDefinition* particle = particleTable->FindParticle(particleName="opticalphoton");
 
-    for( G4int iP = 0; iP<NumberOfParticlesToBeGenerated; iP++ ) {
 
-        // set particle type
-        fParticleGun->SetParticleDefinition(particle);
+    // set particle type
+    fParticleGun->SetParticleDefinition(particle);
 
-        // set optical photon energy/wavelength
-        fParticleGun->SetParticleEnergy(2*eV);
+    // set optical photon energy/wavelength
+    fParticleGun->SetParticleEnergy(2*eV);
 
-        // set momentum direction
-        G4double mom_x, mom_y, mom_z ;
-        mom_x = 0;
-        mom_y = 0;
-        mom_z = 2*eV;
-        fParticleGun->SetParticleMomentumDirection( G4ThreeVector(mom_x, mom_y, mom_z));
+    // set momentum direction
+    G4double mom_x, mom_y, mom_z ;
+    mom_x = 0;
+    mom_y = 0;
+    mom_z = 2*eV;
+    fParticleGun->SetParticleMomentumDirection( G4ThreeVector(mom_x, mom_y, mom_z));
 
-        G4double pol_x, pol_y, pol_z;
-        pol_x = 1;
-        pol_y = 0;
-        pol_z = 0;
-        fParticleGun->SetParticlePolarization( G4ThreeVector(pol_x, pol_y, pol_z) );
-        analysis->analyseInitPolX(pol_x);
-        analysis->analyseInitPolY(pol_y);
-        analysis->analyseInitPolZ(pol_z);
+    G4double pol_x, pol_y, pol_z;
+    pol_x = 1;
+    pol_y = 0;
+    pol_z = 0;
+    fParticleGun->SetParticlePolarization( G4ThreeVector(pol_x, pol_y, pol_z) );
+    analysis->analyseInitPolX(pol_x);
+    analysis->analyseInitPolY(pol_y);
+    analysis->analyseInitPolZ(pol_z);
 
-        fParticleGun->SetParticlePosition(G4ThreeVector(0., 0., 0.));
+    fParticleGun->SetParticlePosition(G4ThreeVector(0., 0., 0.));
 
-        fParticleGun->GeneratePrimaryVertex( anEvent );
-    }
+    fParticleGun->GeneratePrimaryVertex( anEvent );
      
 
 }
