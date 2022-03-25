@@ -44,3 +44,5 @@ A simple Geant4 package has been implemented in dir "./Ray".
 - example3.py : at Phi=270 deg, check if the rho_v == Hv/Vv for different input rhov.
 - example4.py : compare MC sim and measurement data.
 - example5.py : sample scattered photons of anisotropic liquids.
+
+For Geant4 codes, entering Ray/build, using "./exampleRay photon.mac" to generate events and get output root file for analysis.
