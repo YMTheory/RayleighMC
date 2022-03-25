@@ -62,12 +62,12 @@ if __name__ == "__main__" :
     #ray.set_outMomTheta(np.pi/2.)
     #ray.set_outMomPhi(np.pi*1/2.)
 
-    nPhoton = 50000
+    nPhoton = 500000
     for i in range(nPhoton) :
         if i % 100 == 0 :
             print(i)
-        ray.SampleFromTheta()
-        #ray.sampleLocally()
+        #ray.SampleFromTheta()
+        ray.sampleLocally()
         #ray.sampleSeconderies()   # Geant4 OpRayleigh sampling
         #ray.set_outMomPhi(ray.GeneratePhi())
         #ray.GetPhotonPolarisation()

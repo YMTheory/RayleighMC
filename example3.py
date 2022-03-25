@@ -1,7 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import hist
-from hist import Hist
 
 from Rayleigh_class import Rayleigh
 from detector import detector
@@ -26,7 +24,7 @@ if __name__ == "__main__" :
     ray.set_inMom(0, 0, 1)     # incident light momentum
     ray.set_inPol(1, 0, 0)     # incident light polarisation
     
-    rhou_arr = np.arange(0, 0.6, 0.05)
+    rhou_arr = np.arange(0, 0.6, 0.1)
     rhov_arr = []
     Nrhou = len(rhou_arr)
     Hh, Hv, Vh, Vv = [], [], [], []
@@ -69,7 +67,8 @@ if __name__ == "__main__" :
                 ray.set_inPol(1, 0, 0)
                 #ray.rotate_inPol()
                 #ray.calculatePol()
-                ray.rotate_inPol_twice()
+                #ray.rotate_inPol_twice()
+                ray.rotate_inPol_once()
                 outPol_arr[ii].append(ray.get_outPol()[0])
                 outPol_arr[ii].append(ray.get_outPol()[1])
                 outPol_arr[ii].append(ray.get_outPol()[2])

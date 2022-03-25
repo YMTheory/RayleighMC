@@ -86,7 +86,7 @@ if __name__ == "__main__" :
 
 
         for i in range(Nstep):
-            ax.plot(polAngle_arr*np.pi/180, prob_arr[i], lw=2, color="blue")
+            ax.plot(polAngle_arr*np.pi/180-, prob_arr[i], lw=2, color="blue")
     #plt.legend()
 
     if hor_flag :

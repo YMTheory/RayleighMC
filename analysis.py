@@ -122,13 +122,13 @@ if __name__ == "__main__" :
     #plt.show()
     
     
-    fig2 = plt.figure(constrained_layout=True, figsize=(18 , 9))
-    spec2 = gridspec.GridSpec(ncols=4, nrows=2, figure=fig2)
+    fig2 = plt.figure(constrained_layout=True, figsize=(15 , 9))
+    spec2 = gridspec.GridSpec(ncols=3, nrows=2, figure=fig2)
     f2_ax1 = fig2.add_subplot(spec2[0, 0])
     f2_ax2 = fig2.add_subplot(spec2[0, 1])
     f2_ax3 = fig2.add_subplot(spec2[0, 2])
-    f2_ax4 = fig2.add_subplot(spec2[0, 3])
-    f2_ax5 = fig2.add_subplot(spec2[1, 0])
+    f2_ax4 = fig2.add_subplot(spec2[1, 0])
+    f2_ax5 = fig2.add_subplot(spec2[1, 1])
 
 
     mplhep.hist2dplot(hMom, ax=f2_ax1)
@@ -143,8 +143,8 @@ if __name__ == "__main__" :
     mplhep.histplot(hBeta, ax=f2_ax4, color="black")
     f2_ax4.set_xlabel(r"$\beta$ [deg]", fontsize=15)
     mplhep.histplot(hAngle, ax=f2_ax5, color="black")
-    mplhep.histplot(hCalc, ax=f2_ax5, color="hotpink")
-    f2_ax5.set_xlabel(r"angle [deg]", fontsize=15)
+    #mplhep.histplot(hCalc, ax=f2_ax5, color="hotpink")
+    f2_ax5.set_xlabel(r"$\Theta$ [deg]", fontsize=15)
 
 
 

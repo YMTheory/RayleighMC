@@ -1,7 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import hist
-from hist import Hist
 
 from Rayleigh_class import Rayleigh
 from detector import detector
@@ -26,7 +24,7 @@ if __name__ == "__main__" :
     ray.set_inPol(1, 0, 0)     # incident light polarisation
     
     # sef depolarisation ratio
-    ray.set_rhov(0.18)      # LAB case
+    ray.set_rhov(0.208)      # LAB case
     ray.calcTensor()
 
     #### output depolarisation related properties ############
@@ -38,13 +36,13 @@ if __name__ == "__main__" :
 
     
     ver_flag = True
-    hor_flag = True
+    hor_flag = False
 
     Nsample = 10000
 
     polAngle_arr = np.arange(0, 361, 1)
 
-    theta_start, theta_stop, theta_step = 90, 100, 10.
+    theta_start, theta_stop, theta_step = 90, 100, 5.
     Nstep = int((theta_stop - theta_start) / theta_step)
 
     if ver_flag:
@@ -94,7 +92,7 @@ if __name__ == "__main__" :
 
         for i in range(Nstep):
             ax.plot(polAngle_arr*np.pi/180-np.pi/2, prob_arr[i], lw=2, label="vertically incident")
-        ax.set_yticklabels([])
+        #ax.set_yticklabels([])
         #plt.legend()
 
 
@@ -146,31 +144,33 @@ if __name__ == "__main__" :
 
         for i in range(Nstep):
             ax.plot(polAngle_arr*np.pi/180-np.pi/2, prob_arrH[i], lw=2, label="horizontally incident")
-        ax.set_yticklabels([])
+        #ax.set_yticklabels([])
         plt.legend()
 
-    fig, ax1 = plt.subplots()
-    Hh, Hh1 = [], []
-    Vh, Hv, Vv = [], [], []
-    for i in range(Nstep):
-        Vh.append( (prob_arrH[i][0] + prob_arrH[i][180] ) /2.)
-        Hh.append( (prob_arrH[i][90] + prob_arrH[i][270]) /2.)
-        Vv.append( (prob_arr[i][0] + prob_arr[i][180] ) /2.)
-        Hv.append(  (prob_arr[i][90] + prob_arr[i][270]) /2. )
-        ang1 = (theta_start + i * theta_step ) / 180.*np.pi
-        Hh1.append( np.cos(ang1)**2 * Vv[-1] + np.sin(ang1)**2 * Hv[-1] )
+    #fig, ax1 = plt.subplots()
+    #Hh, Hh1 = [], []
+    #Vh, Hv, Vv = [], [], []
+    #for i in range(Nstep):
+    #    if hor_flag:
+    #        Vh.append( (prob_arrH[i][0] + prob_arrH[i][180] ) /2.)
+    #        Hh.append( (prob_arrH[i][90] + prob_arrH[i][270]) /2.)
+    #    if ver_flag:
+    #        Vv.append( (prob_arr[i][0] + prob_arr[i][180] ) /2.)
+    #        Hv.append(  (prob_arr[i][90] + prob_arr[i][270]) /2. )
+    #        ang1 = (theta_start + i * theta_step ) / 180.*np.pi
+    #        Hh1.append( np.cos(ang1)**2 * Vv[-1] + np.sin(ang1)**2 * Hv[-1] )
 
-        #Hh1.append(np.cos((theta_start + theta_step*i)/180.*np.pi)**2 * Hv + np.sin((theta_start + i*theta_step)/180.*np.pi)**2 * Vv)
-    
-    ax1.plot(np.arange(theta_start, theta_stop, theta_step), Hh, "o-", label="simulation")
-    ax1.plot(np.arange(theta_start, theta_stop, theta_step), Hh1, "v-", label="calculation")
-    #ax1.plot(np.arange(theta_start, theta_stop, theta_step), Hv, "o-", label="Hv")
-    #ax1.plot(np.arange(theta_start, theta_stop, theta_step), Vh, "o-", label="Vh")
-    #ax1.plot(np.arange(theta_start, theta_stop, theta_step), Vv, "o-", label="Vv")
-    ax1.legend()
-    ax1.set_xlabel("Theta [deg]")
-    ax1.set_ylabel("Hh")
-    #plt.savefig("Anisotropic_rhou03_scale_HorVer_Theta90.pdf")
+    #    #Hh1.append(np.cos((theta_start + theta_step*i)/180.*np.pi)**2 * Hv + np.sin((theta_start + i*theta_step)/180.*np.pi)**2 * Vv)
+    #
+    #ax1.plot(np.arange(theta_start, theta_stop, theta_step), Hh, "o-", label="simulation")
+    #ax1.plot(np.arange(theta_start, theta_stop, theta_step), Hh1, "v-", label="calculation")
+    ##ax1.plot(np.arange(theta_start, theta_stop, theta_step), Hv, "o-", label="Hv")
+    ##ax1.plot(np.arange(theta_start, theta_stop, theta_step), Vh, "o-", label="Vh")
+    ##ax1.plot(np.arange(theta_start, theta_stop, theta_step), Vv, "o-", label="Vv")
+    #ax1.legend()
+    #ax1.set_xlabel("Theta [deg]")
+    #ax1.set_ylabel("Hh")
+    ##plt.savefig("Anisotropic_rhou03_scale_HorVer_Theta90.pdf")
     plt.show()
     
     
