@@ -73,8 +73,6 @@ void RayDetectorConstruction::DefineMaterials()
     G4MaterialPropertiesTable* air_mpt = new G4MaterialPropertiesTable();
     air_mpt -> AddProperty("RINDEX", photonEnergy, rindex, nEntries);
     air_mpt -> AddProperty("RAYLEIGH", photonEnergy, RayLength, nEntries);
-    G4double rhov = 0.0;
-    air_mpt->AddConstProperty("RHOV", rhov);
     air -> SetMaterialPropertiesTable(air_mpt);
 
 
@@ -84,7 +82,7 @@ void RayDetectorConstruction::DefineMaterials()
     lab_mpt -> AddProperty("RINDEX", photonEnergy, rindex, nEntries);
     G4double RayLength1[2] = {1.0*cm, 1.0*cm};
     lab_mpt -> AddProperty("RAYLEIGH", photonEnergy, RayLength1, nEntries);
-    rhov = 0.2;
+    G4double rhov = 0.2;
     lab_mpt->AddConstProperty("RHOV", rhov);
     lab->SetMaterialPropertiesTable(lab_mpt);
 
@@ -94,8 +92,6 @@ void RayDetectorConstruction::DefineMaterials()
     black_mpt -> AddProperty("RINDEX", photonEnergy, rindex, nEntries);
     black_mpt -> AddProperty("RAYLEIGH", photonEnergy, RayLength, nEntries);
     black_mpt -> AddProperty("theAbsorption", photonEnergy, Abs, nEntries);
-    rhov = 0.0;
-    black_mpt->AddConstProperty("RHOV", rhov);
     black -> SetMaterialPropertiesTable(black_mpt);
 }
 

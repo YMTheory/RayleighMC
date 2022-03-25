@@ -60,10 +60,10 @@ RayleighScattering::PostStepDoIt(const G4Track& aTrack, const G4Step& aStep)
     const G4Material* aMaterial = aTrack.GetMaterial();
     G4MaterialPropertiesTable* aMaterialPropertiesTable = 
         aMaterial->GetMaterialPropertiesTable();
-    if (!aMaterialPropertiesTable)
-      rhov = 0.0;
+    if (aMaterialPropertiesTable->ConstPropertyExists("RHOV"))
+        rhov = aMaterialPropertiesTable->GetConstProperty("RHOV");
     else
-      rhov = aMaterialPropertiesTable->GetConstProperty("RHOV");
+        rhov = 0.0;
 
     G4double CosThetar, SinThetar, Phir;
     G4double unit_x, unit_y, unit_z;
