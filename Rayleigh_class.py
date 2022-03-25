@@ -106,27 +106,9 @@ class Rayleigh(object):
     def get_scatProb(self):
         return self.scatProb
 
-    def set_scatPron(self, prob):
+    def set_scatProb(self, prob):
         self.scatProb = prob
 
-
-
-    def rotateUz(self, u1, u2, u3, dx, dy, dz):
-        up = u1*u1 + u2*u2;
-    
-        if up > 0:
-            up = np.sqrt(up)
-            px = dx;  py = dy;  pz = dz;
-            dx = (u1*u3*px - u2*py)/up + u1*pz;
-            dy = (u2*u3*px + u1*py)/up + u2*pz;
-            dz =    -up*px +             u3*pz;
-    
-        elif u3 < 0.: 
-            dx = -dx; dz = -dz;      
-        else:
-            pass
-
-        return dx, dy, dz
 
 
     def normalize(self, dx, dy, dz):
@@ -136,6 +118,7 @@ class Rayleigh(object):
         nz = dz / dd
 
         return nx, ny, nz
+
 
 
     def get_inMom(self):
@@ -192,74 +175,19 @@ class Rayleigh(object):
 
 
     def calcTensor(self):
-        # On the main axes
+        # On the main axes, calculate polarizability tensor based on rhov
         alpha = 1
         rho = self.rhov
         beta = (np.sqrt(45*rho)/3 - np.sqrt(3-4*rho)) / (-np.sqrt(3-4*rho) - 2/3*np.sqrt(45*rho))
-        #beta = (np.sqrt(45*rho)/3 + np.sqrt(3-4*rho)) / (np.sqrt(3-4*rho) -2/3*np.sqrt(45*rho))
-
-        #self.alpha = np.sqrt(alpha)
-        #self.beta = np.sqrt(beta)
         self.alpha = alpha
         self.beta = beta
 
 
-    def rotate_inPol(self):
-        # My own implementations based on symmetry
-        #cosThetaLoc = random.uniform(-1, 1)
-        #sinThetaLoc = np.sqrt(1 - cosThetaLoc**2)
-        #PhiLoc   = random.uniform(0, 2*np.pi)
-        #cosPhiLoc = np.cos(PhiLoc)
-        #sinPhiLoc = np.sin(PhiLoc)
-        #newX1 = np.array([sinThetaLoc*cosPhiLoc, sinThetaLoc*sinPhiLoc, cosThetaLoc])
-        #tmp_newX2 = vm.perpendicular_vector(newX1)
-        #tmp_newX3 = np.cross(newX1, tmp_newX2)
 
-        #ksi = random.uniform(0, 2*np.pi)
-        #newX2 = tmp_newX2 * np.cos(ksi) + tmp_newX3 * np.sin(ksi)
-        #newX3 = np.cross(newX1, newX2)
-
-        #crd1 = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-        #crd2 = np.vstack((newX1, newX2, newX3))
-        #rotM = np.matmul(crd1, crd2)
-
-        # based on scipy random transform
-        p = R.random(1).as_matrix()[0]
-        rotM = R.from_matrix(p) 
-        rotM_inv = rotM.inv()
-        p_inv = R.as_matrix(rotM_inv)
-
-        # check with fixed rotation
-        #rotM = R.from_euler('zyx', [[60, 30, 30]], degrees=True)
-        #rotM_inv = rotM.inv()
-        #p = R.as_matrix(rotM)[0]
-        #p_inv = R.as_matrix(rotM_inv)[0]
-
-        T = np.array([[self.alpha, 0, 0], [0, self.beta, 0], [0, 0, self.beta]])
-        T_new = np.matmul(np.matmul(p, T), p_inv)
-
-        pol_new = np.matmul(T_new, self.inPol)
-        inpx, inpy, inpz = self.normalize(pol_new[0], pol_new[1], pol_new[2])
-        cosTheta2 = (inpx*self.inPol[0] + inpy*self.inPol[1] + inpz*self.inPol[2])**2
-        #print("cosTheta2 = ", cosTheta2)
-        self.set_inPol(inpx, inpy, inpz)
-
-        #self.scale = cosTheta2
-        self.scale = (pol_new.dot(pol_new))
-        #print("scale factor = ", self.scale)
-
-
-
-        ## energy loss in re-polarisation ????
-        #inP = self.get_inPol()
-        #inM = self.get_inMom()
-        #vanish_prob = inP.dot(inM)
-        #sample = random.uniform(0, 1)
-        #if sample < vanish_prob:
-        #    self.scatProb = 0
-
-
-    def rotate_inPol_once(self):
+    #def rotate_inPol_once(self):
+    def calculatePol_modified(self):
+        # calculate polarization of scattered photons at certain directions of anisotropic liquids
+        # required given scatterd direction
         scale = 1.
 
         p = R.random(1).as_matrix()[0]
@@ -308,6 +236,39 @@ class Rayleigh(object):
 
         self.scatProb = scale
     
+
+
+    def sampleMomPol_modified(self):
+        #sampling direction and polarization of scattered photons of anisotropic liquids
+
+        flag = True
+        while flag:
+            # sample momentum randomly
+            CosTheta = random.uniform(0, 1)
+            SinTheta = np.sqrt(1-CosTheta**2)
+            if random.uniform(0, 1) < 0.5 :
+                CosTheta = -CosTheta
+            
+            rand = 2*np.pi * random.uniform(0, 1)
+            SinPhi = np.sin(rand)
+            CosPhi = np.cos(rand)
+ 
+            self.set_outMomTheta(np.arccos(CosTheta))
+            self.set_outMomPhi(rand)
+
+            energy = self.inE
+            px1, py1, pz1 = energy*SinPhi*CosTheta, energy*SinPhi*SinTheta, energy*CosTheta
+            self.set_outMom(px1, py1, pz1)
+            px1n, py1n, pz1n = CosPhi*SinTheta, SinPhi*SinTheta, CosTheta
+            ex0, ey0, ez0 = self.inPol[0], self.inPol[1], self.inPol[2]
+
+            calculatePol_modified()
+
+            ### Sampling with CosTheta^2 Law
+            if self.scatProb >= random.uniform(0, 1):
+                self.set_outPolBeta(beta)
+
+
 
 
 
@@ -380,50 +341,9 @@ class Rayleigh(object):
         self.scatProb = scale
     
 
-
-    
-    def calculatePol_locally(self):
-
-        self.rotate_inPol()
-
-        vec = np.array([1, 0, 0])
-        ang, ax = rot.rotationAngle(self.inPol, vec), rot.rotationAxis(self.inPol, vec)
-        mat = rot.RotationMatrix(ang, ax)
-        #print("Rotation matrix", mat)
-
-        local_outMom = np.matmul(mat, self.outMom)
-        #print("local outMom : ", local_outMom)
-
-        CosTheta = local_outMom[2] / np.sqrt(local_outMom.dot(local_outMom))
-        SinTheta = np.sqrt(1 - CosTheta**2)
-        CosPhi = local_outMom[0] / np.sqrt(local_outMom[0]**2 + local_outMom[1]**2)
-        SinPhi = local_outMom[1] / np.sqrt(local_outMom[0]**2 + local_outMom[1]**2)
-
-        px1n, py1n, pz1n = CosPhi*SinTheta, SinPhi*SinTheta, CosTheta
-
-        if py1n == 0 and pz1n == 0 :
-            beta = random.uniform(0, 1) * 2 * np.pi
-            SinBeta, CosBeta = np.sin(beta), np.cos(beta)
-
-        else:
-            beta = 0   # required at the plane 
-            if random.uniform(0, 1) < 0.5:
-                beta = np.pi
-            SinBeta, CosBeta = np.sin(beta), np.cos(beta)
-
-
-        N = np.sqrt(1 - SinTheta**2*CosPhi**2)
-        ex1, ey1, ez1 = N * CosBeta, SinTheta**2*SinPhi*CosPhi/N*CosBeta, SinTheta*CosTheta*CosPhi/N*CosBeta
-        ex1n, ey1n, ez1n = self.normalize(ex1, ey1, ez1)
-        local_outPol = np.array([ex1n, ey1n, ez1n])
-        global_outPol = np.matmul(np.linalg.inv(mat), local_outPol)
-
-        self.set_outPol(global_outPol[0], global_outPol[1], global_outPol[2])
-        
-
-
-
     def calculatePol(self):
+        # calculate polarization of scattered photons at certain directions of isotropic liquids
+        # required given scatterd direction
         
         if self.scatProb == 0:
             self.scatProb = 0
@@ -476,6 +396,7 @@ class Rayleigh(object):
 
 
     def sampleMomPol(self):
+        #sampling direction and polarization of scattered photons of isotropic liquids
 
         flag = True
         while flag:
