@@ -57,8 +57,9 @@ if __name__ == "__main__" :
             ray.set_outMomPhi(phi)
             ray.set_outMom(ray.get_inE()*np.cos(ray.get_outMomPhi())*np.sin(ray.get_outMomTheta()), ray.get_inE()*np.sin(ray.get_outMomPhi())*np.sin(ray.get_outMomTheta()), ray.get_inE()*np.cos(ray.get_outMomTheta()) )
 
-            ray.rotate_inPol_twice()
-            
+            #ray.rotate_inPol_twice()
+            ray.calculatePol_modified()
+
             prob = ray.get_scatProb()
 
             sample = random.uniform(0, 1)
