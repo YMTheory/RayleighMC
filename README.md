@@ -9,7 +9,7 @@ Python scripts have been implemented and validated for toy study and algorithm d
 A simple Geant4 package has been implemented in dir "./Ray".
 
 ## Implementations:
--PYTHON:
+**PYTHON:**
   - Rayleigh_class : a class describing Rayleigh scattering for single photon. 
                      
     - Polarisation and momentum of the incident photon need to be specified. 
@@ -25,7 +25,8 @@ A simple Geant4 package has been implemented in dir "./Ray".
   - detector: describing the physical properties of an ideal detector. The most important one is the detection polarisation direction by using "set_detPol()".
 
 
-- Geant4:
+**GEANT4:**
+  
   Geant4 codes are implemented in dir "Ray/" where a Geant4.10.06 version software has been used.
   
   - geometry: a simple sample was placed at center with customed Rayleigh scattering length (RAYLEIGH) and penpendicularly polarized depolarization ratio (RHOV); A 4Pi sensitive detector surrounds the sample outside to detect photons and give the angular/polarization information.
