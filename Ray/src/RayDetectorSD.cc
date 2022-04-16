@@ -74,6 +74,7 @@ G4bool RayDetectorSD::ProcessHits( G4Step* aStep, G4TouchableHistory*)
     analysis-> analyseDetPolX(track->GetPolarization().getX());
     analysis-> analyseDetPolY(track->GetPolarization().getY());
     analysis-> analyseDetPolZ(track->GetPolarization().getZ());
+    analysis-> analyseDetTime(track->GetGlobalTime());
 
     G4ThreeVector pos = aStep->GetPreStepPoint()->GetPosition();    
     G4double posx = pos.x();

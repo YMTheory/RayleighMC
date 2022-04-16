@@ -80,9 +80,9 @@ void RayDetectorConstruction::DefineMaterials()
     lab = new G4Material(name="lab", density=2.23*g/cm3,compNum=2);
     G4MaterialPropertiesTable* lab_mpt = new G4MaterialPropertiesTable();
     lab_mpt -> AddProperty("RINDEX", photonEnergy, rindex, nEntries);
-    G4double RayLength1[2] = {1.0*cm, 1.0*cm};
+    G4double RayLength1[2] = {27.*m, 27.*m};
     lab_mpt -> AddProperty("RAYLEIGH", photonEnergy, RayLength1, nEntries);
-    G4double rhov = 0.2;
+    G4double rhov = 0.0;
     lab_mpt->AddConstProperty("RHOV", rhov);
     lab->SetMaterialPropertiesTable(lab_mpt);
 
@@ -101,8 +101,10 @@ void RayDetectorConstruction::DefineMaterials()
 G4LogicalVolume* RayDetectorConstruction::CellConstruction()
 {
     
-    G4Box* solidCell  =
-        new G4Box("cellSolid", 1*cm, 1*cm, 1*cm);
+    //G4Box* solidCell  =
+    //    new G4Box("cellSolid", 1*cm, 1*cm, 1*cm);
+    G4Sphere* solidCell = 
+        new G4Sphere("cellSolid", 0*cm, 17700*mm, 0, 2*pi, 0, pi);
 
     G4ThreeVector zTrans(0, 0, 0);
     G4LogicalVolume* logicCell =                         
@@ -119,16 +121,17 @@ G4LogicalVolume* RayDetectorConstruction::CellConstruction()
 G4LogicalVolume* RayDetectorConstruction::DetectorConstruction()
 {
     G4Sphere* solidDet = 
-        new G4Sphere("detSolid", 10*cm, 11*cm, 0, 2*pi, 0, pi);
+        new G4Sphere("detSolid", 18000*mm, 18010*mm, 0, 2*pi, 0, pi);
+        //new G4Sphere("detSolid", 10*cm, 11*cm, 0, 2*pi, 0, pi);
 
     G4Box* solidHole = 
         new G4Box("holeSolid", 1*mm, 1*mm, 2*cm);
 
     G4VSolid* solidSub = 
-        new G4SubtractionSolid("subSolid", solidDet, solidHole, 0, G4ThreeVector(0, 0, 10*cm));
+        new G4SubtractionSolid("subSolid", solidDet, solidHole, 0, G4ThreeVector(0, 0, 18005*mm));
 
     G4LogicalVolume* logicDet = 
-        new G4LogicalVolume(solidDet, 
+        new G4LogicalVolume(solidSub, 
                             black,
                             "logicDet");
 
@@ -143,8 +146,7 @@ G4LogicalVolume* RayDetectorConstruction::DetectorConstruction()
 G4VPhysicalVolume* RayDetectorConstruction::DefineVolumes()
 {
 
-    G4double worldLength = 1.8*m;
-
+    G4double worldLength = 40.*m;
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////

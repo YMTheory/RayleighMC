@@ -38,6 +38,7 @@ class RayAnalysisManager  {
         void analyseDetPolX(G4double polx);
         void analyseDetPolY(G4double poly);
         void analyseDetPolZ(G4double polz);
+        void analyseDetTime(G4double time);
         void analyseAddNtupleRow();
 
 

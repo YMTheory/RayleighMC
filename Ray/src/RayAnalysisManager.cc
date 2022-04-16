@@ -50,6 +50,7 @@ void RayAnalysisManager::book()
     man->CreateNtupleDColumn("DetPosX");
     man->CreateNtupleDColumn("DetPosY");
     man->CreateNtupleDColumn("DetPosZ");
+    man->CreateNtupleDColumn("DetTime");
     man->FinishNtuple();
     G4cout << "Created ntuple for photon counting" << G4endl;
 }
@@ -156,6 +157,11 @@ void RayAnalysisManager::analyseDetPosZ(G4double posz)
     man->FillNtupleDColumn( 12, posz);
 }
 
+void RayAnalysisManager::analyseDetTime(G4double time)
+{
+    G4AnalysisManager* man = G4AnalysisManager::Instance();
+    man->FillNtupleDColumn(13, time);
+}
 
 
 void RayAnalysisManager::analyseAddNtupleRow()
