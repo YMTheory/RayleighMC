@@ -11,6 +11,7 @@
 #include "globals.hh"
 
 class G4VPhysicsConstructor;
+class G4ProductionCuts;
 
 class RayPhysicsList : public G4VModularPhysicsList
 {
@@ -23,8 +24,8 @@ class RayPhysicsList : public G4VModularPhysicsList
 
         virtual void ConstructParticle();
         virtual void ConstructProcess();
-
         void ConstructOpticalProcess();
+
 };
 
 #endif

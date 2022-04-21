@@ -1,0 +1,109 @@
+    LS = G4Material::GetMaterial("LS", any_warnings);
+    if (LS) {
+        G4cout << "ESR is constructed from GDML file." << G4endl;
+    } 
+    else{
+        G4cout << "LS is constructed from the code" << G4endl;
+        LS  = new G4Material("LS", 0.859*g/cm3, 5);
+        LS->AddElement(TS_C_of_Graphite,  0.87924);
+        //LS->AddElement(H,  0.1201);
+        LS->AddElement(TS_H_of_Water,  0.1201);
+        LS->AddElement(O,  0.00034);
+        //LS->AddElement(Gd, 0.0010315);
+        LS->AddElement(N,  0.00027);
+        LS->AddElement(S,  0.00005);
+
+        G4MaterialPropertiesTable* LSMPT = new G4MaterialPropertiesTable();
+
+            G4cout << "Setup LS Material Tables from MCParamsSvc" << G4endl;
+            IMCParamsSvc::map_s2d LS_scales_map;
+            bool st = mcgt->Get("Material.LS.scale", LS_scales_map);
+            double scale_abslength = 1.0;
+            if (st && LS_scales_map.count("AbsorptionLenBefore") && LS_scales_map.count("AbsorptionLenAfter")) {
+                scale_abslength = LS_scales_map["AbsorptionLenAfter"] / LS_scales_map["AbsorptionLenBefore"];
+                G4cout << "Scale ABSLENGTH from " << LS_scales_map["AbsorptionLenBefore"]
+                       << " to " << LS_scales_map["AbsorptionLenAfter"]
+                       << " factor: " << scale_abslength
+                       << G4endl;
+            }
+            double scale_rayleigh = 1.0;
+            if (st && LS_scales_map.count("RayleighLenBefore") && LS_scales_map.count("RayleighLenAfter")) {
+                scale_rayleigh = LS_scales_map["RayleighLenAfter"] / LS_scales_map["RayleighLenBefore"];
+                G4cout << "Scale RAYLEIGH from " << LS_scales_map["RayleighLenBefore"]
+                       << " to " << LS_scales_map["RayleighLenAfter"]
+                       << " factor: " << scale_rayleigh
+                       << G4endl;
+            }
+            double scale_lsly = 1.0 ;
+            if(st && LS_scales_map.count("LSLY_NewPMTModelScale") && m_pmt_optical_model == "new"){
+                scale_lsly *= LS_scales_map["LSLY_NewPMTModelScale"];
+            }
+     
+            if( st && LS_scales_map.count("LSLY_NewLSModelScale") && m_LS_optical_model == "new"){
+                scale_lsly *= LS_scales_map["LSLY_NewLSModelScale"];
+            }
+            
+        
+           if(m_LS_optical_model == "new") // LAB AbsLength used for new LS optical model
+               {
+                 helper_mpt(LSMPT, "ABSLENGTH", mcgt.data(), "Material.LS.ABSLENGTH_v2");
+               }
+            else if (m_LS_optical_model == "old") // Old LS AbsLength used for old LS optical model
+               {
+                 helper_mpt(LSMPT, "ABSLENGTH", mcgt.data(), "Material.LS.ABSLENGTH_v1",scale_abslength);    
+               }
+            else {
+                    G4cout << "Warning: Can't find  LS abslength to register " << G4endl;
+                 }
+       
+         helper_mpt(LSMPT, "RINDEX",                     mcgt.data(), "Material.LS.RINDEX");
+         helper_mpt(LSMPT, "FASTCOMPONENT",              mcgt.data(), "Material.LS.FASTCOMPONENT");
+         helper_mpt(LSMPT, "SLOWCOMPONENT",              mcgt.data(), "Material.LS.SLOWCOMPONENT");
+         helper_mpt(LSMPT, "REEMISSIONPROB",             mcgt.data(), "Material.LS.REEMISSIONPROB");
+         helper_mpt(LSMPT, "RAYLEIGH",                   mcgt.data(), "Material.LS.RAYLEIGH", scale_rayleigh);
+        
+        // add different time constant for different particle type
+        
+        helper_mpt(LSMPT, "OpticalCONSTANT",         mcgt.data(), "Material.LS.OpticalCONSTANT");
+        helper_mpt(LSMPT, "GammaCONSTANT",         mcgt.data(), "Material.LS.GammaCONSTANT");
+        helper_mpt(LSMPT, "AlphaCONSTANT",         mcgt.data(), "Material.LS.AlphaCONSTANT");         
+        helper_mpt(LSMPT, "NeutronCONSTANT",         mcgt.data(), "Material.LS.NeutronCONSTANT");
+        
+        helper_mpt(LSMPT, "PPOABSLENGTH",               mcgt.data(), "Material.LS.PPOABSLENGTH");
+        helper_mpt(LSMPT, "PPOREEMISSIONPROB",          mcgt.data(), "Material.LS.PPOREEMISSIONPROB");
+        helper_mpt(LSMPT, "PPOCOMPONENT",               mcgt.data(), "Material.LS.PPOCOMPONENT");
+        helper_mpt(LSMPT, "PPOTIMECONSTANT",            mcgt.data(), "Material.LS.PPOTIMECONSTANT");
+       
+        helper_mpt(LSMPT, "bisMSBABSLENGTH",            mcgt.data(), "Material.LS.bisMSBABSLENGTH");
+        helper_mpt(LSMPT, "bisMSBREEMISSIONPROB",       mcgt.data(), "Material.LS.bisMSBREEMISSIONPROB");
+        helper_mpt(LSMPT, "bisMSBCOMPONENT",            mcgt.data(), "Material.LS.bisMSBCOMPONENT");
+        helper_mpt(LSMPT, "bisMSBTIMECONSTANT",         mcgt.data(), "Material.LS.bisMSBTIMECONSTANT");
+         
+        IMCParamsSvc::map_s2d LS_constant_map;
+           st = mcgt->Get("Material.LS.ConstantProperty", LS_constant_map);
+            if (st && LS_constant_map.count("ScintillationYield")) {
+                float Scintillation_Yield = 1.0;
+                Scintillation_Yield = LS_constant_map["ScintillationYield"];
+                G4cout << "Scintillation Yield from MCParamSvc : " << Scintillation_Yield
+                       << G4endl;
+                LSMPT->AddConstProperty("SCINTILLATIONYIELD", Scintillation_Yield*scale_lsly);
+            }
+            else{
+                LogError<<" can't find ScintillationYield in /Material/LS/ConstantProperty "<<std::endl;
+            }   
+ 
+            if (st && LS_constant_map.count("ResolutionScale")) {
+                float Resolution_Scale = 1.0 ; 
+                Resolution_Scale = LS_constant_map["ResolutionScale"];
+                G4cout << "Resolution Scale from MCParamSvc : " << Resolution_Scale
+                       << G4endl;
+                LSMPT->AddConstProperty("RESOLUTIONSCALE", Resolution_Scale);
+            }
+            else{
+                LogError<<" can't find ResolutionScale in /Material/LS/ConstantProperty "<<std::endl;
+            }
+        
+        //LSMPT->DumpTable();
+         LS->SetMaterialPropertiesTable(LSMPT);
+       }
+ 
