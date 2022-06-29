@@ -41,26 +41,24 @@ void RayPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
     G4int NumberOfParticlesToBeGenerated = 1;
     fParticleGun = new G4ParticleGun(NumberOfParticlesToBeGenerated);
 
-    const G4double pi = 3.141592653;
-
     // particle definition
     G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
     G4String particleName;
-    G4ParticleDefinition* particle = particleTable->FindParticle(particleName="e-");
-    //G4ParticleDefinition* particle = particleTable->FindParticle(particleName="opticalphoton");
+    //G4ParticleDefinition* particle = particleTable->FindParticle(particleName="e-");
+    G4ParticleDefinition* particle = particleTable->FindParticle(particleName="opticalphoton");
 
 
     // set particle type
     fParticleGun->SetParticleDefinition(particle);
 
     // set optical photon energy/wavelength
-    fParticleGun->SetParticleEnergy(2*MeV);
+    fParticleGun->SetParticleEnergy(2*eV);
 
     // set momentum direction
     G4double mom_x, mom_y, mom_z ;
     mom_x = 0;
     mom_y = 0;
-    mom_z = 2*MeV;
+    mom_z = 2*eV;
     fParticleGun->SetParticleMomentumDirection( G4ThreeVector(mom_x, mom_y, mom_z));
 
     G4double pol_x, pol_y, pol_z;

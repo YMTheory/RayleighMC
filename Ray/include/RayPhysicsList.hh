@@ -26,6 +26,11 @@ class RayPhysicsList : public G4VModularPhysicsList
         virtual void ConstructProcess();
         void ConstructOpticalProcess();
 
+
+
+    private:
+        G4VPhysicsConstructor* emPhysicsList;
+        G4VPhysicsConstructor* decayPhysicsList;
 };
 
 #endif

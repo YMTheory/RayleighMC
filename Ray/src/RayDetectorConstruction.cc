@@ -96,6 +96,9 @@ void RayDetectorConstruction::DefineMaterials()
     black_mpt -> AddProperty("theAbsorption", photonEnergy, Abs, nEntries);
     black -> SetMaterialPropertiesTable(black_mpt);
 
+    // Water from Database
+    water = nist->FindOrBuildMaterial("G4_WATER");
+
     // LS from JUNO
     LS = G4Material::GetMaterial("LS", JustWarning);
     G4cout << "Material LS is constructed from the codes !" << G4endl;
@@ -144,6 +147,7 @@ void RayDetectorConstruction::DefineMaterials()
     LSMPT -> AddProperty("ABSLENGTH", GdLSABSEnergy, GdLSABSLength, 497);
     LSMPT -> AddProperty("RAYLEIGH", GdLSRayEnergy, GdLSRayLength, 11);
     LSMPT -> AddProperty("RINDEX", GdLSRefIndexEnergy, GdLSRefIndex, 18) ;
+    LS -> SetMaterialPropertiesTable(LSMPT);
 
 
 
@@ -164,7 +168,9 @@ G4LogicalVolume* RayDetectorConstruction::CellConstruction()
     G4LogicalVolume* logicCell =                         
         new G4LogicalVolume(
                 solidCell,
-                lab,             
+                water,
+                // LS, 
+                // lab,             
                 "logicCell");        
 
     return logicCell;

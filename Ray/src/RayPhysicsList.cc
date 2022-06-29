@@ -9,6 +9,7 @@
 #include "RayleighScattering.hh"
 #include "G4EmLivermorePhysics.hh"
 #include "DsG4Scintillation.hh"
+#include "G4DecayPhysics.hh"
 
 #include "G4OpticalPhysics.hh"
 #include "G4SystemOfUnits.hh"
@@ -25,15 +26,27 @@ RayPhysicsList::RayPhysicsList() : G4VModularPhysicsList()
 {
     defaultCutValue = 1.0*mm;
 
-    RegisterPhysics(new G4EmLivermorePhysics());
+    emPhysicsList = new G4EmLivermorePhysics();
+    decayPhysicsList = new G4DecayPhysics();
 
 }
 
 RayPhysicsList::~RayPhysicsList() {
+    delete emPhysicsList;
+    delete decayPhysicsList;
 }
 
 void RayPhysicsList::SetCuts() {
-    SetCutsWithDefault();
+    //SetCutsWithDefault();
+
+    const G4double cutForGamma = defaultCutValue;
+    const G4double cutForElectron = defaultCutValue;
+    const G4double cutForPositron = defaultCutValue;
+
+    SetCutValue(cutForGamma, "gamma");
+    SetCutValue(cutForElectron, "e-");
+    SetCutValue(cutForPositron, "e+");
+
 }
 
 
@@ -46,12 +59,17 @@ void RayPhysicsList::ConstructParticle()
     G4Electron::ElectronDefinition();
     G4Positron::PositronDefinition();
 
+    decayPhysicsList->ConstructParticle();
+    emPhysicsList->ConstructParticle();
+
 }
 
 void RayPhysicsList::ConstructProcess()
 {
     AddTransportation();
     ConstructOpticalProcess();
+    emPhysicsList->ConstructProcess();
+    decayPhysicsList->ConstructProcess();
 }
 
 
