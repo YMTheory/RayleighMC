@@ -55,9 +55,9 @@ if __name__ == "__main__" :
     
     drawPolar = False
     testTheta = False
-    drawHist1D = True
+    drawHist1D = False
     drawHist2D = False
-    drawHist3D = False
+    drawHist3D = True
     drawRhoPolar = False
     drawCompare = False
 
