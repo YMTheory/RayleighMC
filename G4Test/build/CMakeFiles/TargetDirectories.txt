@@ -1,0 +1,8 @@
+/junofs/users/miaoyu/simulation/Rayleigh/Simulation/RayleighMC/G4Test/build/CMakeFiles/install/strip.dir
+/junofs/users/miaoyu/simulation/Rayleigh/Simulation/RayleighMC/G4Test/build/CMakeFiles/install/local.dir
+/junofs/users/miaoyu/simulation/Rayleigh/Simulation/RayleighMC/G4Test/build/CMakeFiles/Ray.dir
+/junofs/users/miaoyu/simulation/Rayleigh/Simulation/RayleighMC/G4Test/build/CMakeFiles/exampleRay.dir
+/junofs/users/miaoyu/simulation/Rayleigh/Simulation/RayleighMC/G4Test/build/CMakeFiles/list_install_components.dir
+/junofs/users/miaoyu/simulation/Rayleigh/Simulation/RayleighMC/G4Test/build/CMakeFiles/edit_cache.dir
+/junofs/users/miaoyu/simulation/Rayleigh/Simulation/RayleighMC/G4Test/build/CMakeFiles/rebuild_cache.dir
+/junofs/users/miaoyu/simulation/Rayleigh/Simulation/RayleighMC/G4Test/build/CMakeFiles/install.dir
