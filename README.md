@@ -27,7 +27,7 @@ A simple Geant4 package has been implemented in dir "./Ray".
 
 **GEANT4:**
   
-  Geant4 codes are implemented in dir "Ray/" where a Geant4.10.06 version software has been used.
+  Geant4 codes are implemented in dir "G4Test/" where a Geant4.10.04 version software has been used.
   
   - geometry: a simple sample was placed at center with customed Rayleigh scattering length (RAYLEIGH) and penpendicularly polarized depolarization ratio (RHOV); A 4Pi sensitive detector surrounds the sample outside to detect photons and give the angular/polarization information.
   - Optical process: a customed RayleighScattering class has been implemented to sample scattered photons for anisotropic liquids. (MatrixCalc class has been added for matrix and vector calcualtion in new class);
